@@ -78,8 +78,7 @@ note = "description 截断 <= 1024 加 ... 后缀, canonical 保留全长"
 
 [agents.kimi-code]
 display_name = "kimi-code"
-install_dir = "~/.kimi-code/skills-imported"
+install_dir = "~/.kimi-code/skills"
 method = "cp"
 keep_native_fields = []
-skills_dir_config_key = "[skills].dirs = [...]  # 或启动加 --skills-dir <dir>"
-note = "kimi --skills-dir 可显式指定任意目录/多个; 默认 auto-discovery 未证实, M4 实测后定; 全部 skill 通过 --skills-dir 加载"
+note = "kimi 默认 user skills root 实测确认是 ~/.kimi-code/skills/(strings 直读); legacy ~/.kimi/skills 会被自动迁移; 无 frontmatter 字段需求(走 kimi 默认 discovery)"
