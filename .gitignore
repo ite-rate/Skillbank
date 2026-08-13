@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+*.whl
+
+# venv
+.venv/
+venv/
+env/
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.cursor/
+
+# local runtime state (manifest 在 git 里跨机同步; 临时态不入 git)
+*.local-state.json
+*.log
+
+# pyproject build cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

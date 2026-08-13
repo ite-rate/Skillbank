@@ -1,0 +1,42 @@
+# Skill-Hub machines.toml — 各机器的 home 路径展开配置
+#
+# emitter 落盘时按 --to <machine> 取该机器的 home + agents.toml 里的 install_dir
+# (相对 home 展开 ~)。
+# Agent 不在 machines.<m>.agents 列表里的 -> 该机器没装该 Agent,
+# sync 时 skip 不报错(需求 4.6: 某台机器没装某 Agent 时同步脚本不应报错, 跳过即可)。
+#
+# 三台机器各占位, 路径未填的标 TODO, 实测后补。
+
+[machines.mac-main]
+display_name = "Mac 主力机"
+home = "/Users/ss"
+agents = [
+    "ClaudeCode",
+    "ZCode",
+    "QwenWorkCN",
+    "TeleAgent",
+    "Hermes",
+    "Codex",
+    "kimi-code",
+]
+
+[machines.laptop]
+display_name = "笔记本"
+home = "/Users/ss"   # TODO: 实测后改, 笔记本若是另一台 Mac 同账号可能同 home
+agents = [
+    "ClaudeCode",
+    "ZCode",
+    "QwenWorkCN",
+    "TeleAgent",
+    "Hermes",
+    "Codex",
+    "kimi-code",
+]
+
+[machines.remote-server]
+display_name = "远程服务器"
+home = "/home/xxx"   # TODO: 实测后改
+agents = [
+    "ClaudeCode",
+    # 远程服务器只装 claude/codex 的子集, 实测后补
+]

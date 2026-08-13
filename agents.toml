@@ -1,0 +1,85 @@
+# Skill-Hub agents.toml — 7 个 Agent 的集成方式配置
+# emitter 读取本文件决定如何把 canonical SKILL.md 部署到各 Agent。
+#
+# 字段约定:
+#   display_name      - 展示名
+#   install_dir       - skill 子目录落点(相对 home, 由 machines.toml 展开 ~)
+#   method            - cp 拷贝整目录 | ln 软链单 SKILL.md 目录指向 canonical
+#   disable_invoke_field / disable_invoke_value
+#                     - level 非 auto 时写到 frontmatter 的字段及值
+#                       (省略 = 该 Agent 无 frontmatter 禁止触发字段, 如 kimi)
+#   keep_native_fields - 保留的 Agent 专有 frontmatter 字段名(从 IR.agent_overrides 取)
+#   lang_duplication  - canonical 中文描述镜像到该 Agent 用的后缀字段(如 zh -> name_zh)
+#   description_max   - description 字符上限(超出 emitter 截断)
+#   file_size_max     - 单文件字符上限(超出 emitter 跳过该 Agent + 警告)
+#   default_category  - (Hermes 用) 子目录归类
+#   skills_dir_config_key - (kimi 用) 提示用户在 config.toml 加的项
+#   note              - 一句话备注
+
+[agents.ClaudeCode]
+display_name = "Claude Code"
+install_dir = "~/.claude/skills"
+method = "cp"
+disable_invoke_field = "disable-model-invocation"
+disable_invoke_value = true
+keep_native_fields = []
+note = "Anthropic Skill 标准本尊; body 透传"
+
+[agents.ZCode]
+display_name = "ZCode"
+install_dir = "~/.zcode/skills"
+method = "ln"
+disable_invoke_field = "disable-model-invocation"
+disable_invoke_value = true
+keep_native_fields = []
+note = "~/.zcode/skills 是混合体(内部真实副本如 archify) M4 清理改纯软链; agora 软链实测工作"
+
+[agents.QwenWorkCN]
+display_name = "QwenWorkCN 千问办公"
+install_dir = "~/.qwenworkcn/skills"
+method = "cp"
+disable_invoke_field = "enabled_at"
+disable_invoke_value = false
+keep_native_fields = ["install_source", "install_method", "skill_id", "name_zh", "cli_version"]
+lang_duplication = { zh = ["name_zh", "description_zh"] }
+note = "实际装的是办公版 QwenWorkCN(非 Qwen Code 开发者版); priority/paths/user-invocable/source 作废字段不取"
+
+[agents.TeleAgent]
+display_name = "TeleAgent"
+install_dir = "~/.config/TeleAgent/skills"
+method = "cp"
+disable_invoke_field = "enabled_at"
+disable_invoke_value = false
+keep_native_fields = ["name_cn", "description_cn", "create_source", "license"]
+lang_duplication = { cn = ["name_cn", "description_cn"] }
+note = "AIGC 水印 hook 已查实: SKILL.MD 进程内 basename 硬排除(watermark.ts:382); cp 落盘不走进程, 双保险"
+
+[agents.Hermes]
+display_name = "Hermes"
+install_dir = "~/.hermes/skills"
+default_category = "imported"
+method = "cp"
+disable_invoke_field = "metadata.hermes.disable-model-invocation"
+disable_invoke_value = true
+keep_native_fields = ["metadata.hermes"]
+description_max = 1024
+file_size_max = 100000
+note = "Hermes 自带 .hub/.curator_state 管家, 只丢文件让其自洽; 类别子目录走 imported/, 不污染 creative/"
+
+[agents.Codex]
+display_name = "Codex"
+install_dir = "~/.codex/skills"
+method = "cp"
+disable_invoke_field = "disable-model-invocation"
+disable_invoke_value = true
+keep_native_fields = []
+description_max = 1024
+note = "description 截断 <= 1024 加 ... 后缀, canonical 保留全长"
+
+[agents.kimi-code]
+display_name = "kimi-code"
+install_dir = "~/.kimi-code/skills-imported"
+method = "cp"
+keep_native_fields = []
+skills_dir_config_key = "[skills].dirs = [...]  # 或启动加 --skills-dir <dir>"
+note = "kimi --skills-dir 可显式指定任意目录/多个; 默认 auto-discovery 未证实, M4 实测后定; 全部 skill 通过 --skills-dir 加载"
