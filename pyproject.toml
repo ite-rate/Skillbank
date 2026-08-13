@@ -20,8 +20,15 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "PyYAML>=6.0",       # SKILL.md frontmatter 是 YAML,parser/emitter 必需
     "tomli_w>=1.0",      # 写 TOML(读用 Python 3.11+ 内置 tomllib)
     "questionary>=2.0",  # M6 交互菜单
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",       # 跑零损耗往返测试
+    "pytest-cov>=5.0",
 ]
 
 [project.scripts]
