@@ -146,6 +146,8 @@ def _rename_callback(orig_name: str, suggested: str, native: str):
 
 def _cmd_import(args: argparse.Namespace) -> int:
     from skillbank.importer import import_skill
+    import yaml
+    import re
 
     agents_cfg, machines, _ = _load_configs()
     try:
@@ -157,7 +159,6 @@ def _cmd_import(args: argparse.Namespace) -> int:
             level=args.level, agent=agent,
             machines=machines, machine=args.machine, force=args.force,
         )
-        # 重名时交互改名(tty) or auto_rename(非 tty/--yes)
         if args.yes or not _is_tty():
             kwargs["auto_rename"] = True
         else:
@@ -166,6 +167,20 @@ def _cmd_import(args: argparse.Namespace) -> int:
         print(f"[import] → {d}")
         for w in warns:
             print(f"  ⚠ {w}")
+
+        # 检测源是否含市场标志(install_source/skill_id) -> 提示标 experimental
+        try:
+            src_fm = yaml.safe_load(
+                re.match(rb"\A---\r?\n(.*?)\r?\n---\r?\n",
+                         (Path(args.path).expanduser() / "SKILL.md").read_bytes(),
+                         re.S).group(1)
+            )
+            if src_fm and (src_fm.get("install_source") or src_fm.get("skill_id")):
+                if args.level != "experimental":
+                    print(f"  💡 来源带市场标志(install_source/skill_id),"
+                          f" 建议 `skillbank set-level {d.name} experimental`(未实测效 / 他者发表)")
+        except Exception:  # noqa: BLE001
+            pass
         print(f"[import] 下一步: skillbank sync 同步到各 Agent")
         return 0
     except ValueError as e:
@@ -407,6 +422,43 @@ def _cmd_scan(args: argparse.Namespace) -> int:
 # --- zcode-cleanup ---
 
 
+def _cmd_set_level(args: argparse.Namespace) -> int:
+    """修改 canonical SKILL.md 的 level 字段(改触发策略: auto/manual/experimental/disable)。
+
+    被 level 切换触发的下游变化由下次 `skillbank sync` 推动:
+    - 改 disable    -> 该 skill 在所有 Agent 副本被清(下次 sync)
+    - 改 auto       -> 同步后 Agent 前端的 disable-model-invocation 也跟着消
+    """
+    import re
+    import yaml
+    from skillbank.ir import Level
+    from skillbank.emitters.canonical import emit_canonical
+    from skillbank.parsers.canonical import parse_canonical
+
+    skill_md = REPO_ROOT / "skills" / args.name / "SKILL.md"
+    if not skill_md.exists():
+        print(f"[set-level] canonical 不存在: skills/{args.name}/")
+        return 2
+
+    old_ir = parse_canonical(skill_md)
+    new_level = Level(args.level)
+    if old_ir.level == new_level:
+        print(f"[set-level] {args.name} 已是 {new_level.value}, 无变化")
+        return 0
+
+    old_level = old_ir.level
+    old_ir.level = new_level
+    emit_canonical(old_ir, skill_md)   # 重写 canonical(body bytes 原样不丢 — 同 emit_canonical 保证)
+    print(f"[set-level] {args.name}: {old_level.value} → {new_level.value}")
+    print(f"  canonical 已更新: {skill_md}")
+    print(f"  下一步: skillbank sync 推到各 Agent(同步行为因 level 已变而不同)")
+    if new_level == Level.DISABLE:
+        print(f"    ⚠ disable 级:下次 sync 会清掉所有已部署副本(canonical 保留, git 可恢复)")
+    elif old_level == Level.DISABLE:
+        print(f"    ⚠ 从 disable 改回:下次 sync 会重新部署该 skill")
+    return 0
+
+
 def _cmd_zcode_cleanup(args: argparse.Namespace) -> int:
     """把 ~/.zcode/skills 里的真实副本 mv 备份后软链到 canonical(逐个交互确认)。"""
     import shutil
@@ -531,6 +583,17 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--yes", action="store_true")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=_cmd_zcode_cleanup)
+
+    sp = sub.add_parser(
+        "set-level",
+        help="改 canonical SKILL.md 的 level(auto/manual/experimental/disable) — 触发策略",
+    )
+    sp.add_argument("name", help="canonical skill name")
+    sp.add_argument(
+        "level", choices=[l.value for l in Level],
+        help="新 level(auto/manual/experimental/disable)",
+    )
+    sp.set_defaults(func=_cmd_set_level)
 
     return p
 
