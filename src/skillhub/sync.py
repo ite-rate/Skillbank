@@ -118,6 +118,15 @@ def collect(
             continue
 
     # d) skill × agent 部署计划
+    # 先按 agent 粒度判一次"装没装":skills 根的父目录(agent home)不存在 = 没装,
+    # 该 agent 全部 skip(防 mkdir -p 凭空造孤儿目录;与 doctor error 语义一致)。
+    installed: dict[str, bool] = {}
+    for agent in agents_cfg.agents:
+        if agent not in mcfg.agents:
+            continue
+        root = machines.get_skills_dir(machine, agent)
+        installed[agent] = root is not None and root.parent.exists()
+
     for name, ir in ctx.irs.items():
         if ir.level == Level.DISABLE:
             continue
@@ -126,10 +135,14 @@ def collect(
         for agent in agents_cfg.agents:            # agents.toml 顺序
             if agent not in mcfg.agents:
                 continue                            # 该机器没配此 Agent = 没装
+            deploy_root = machines.get_skills_dir(machine, agent)
+            if not installed.get(agent):
+                ctx.plan.append(PlanItem("skip", name, agent,
+                                         f"agent 未安装?({deploy_root.parent} 不存在)"))
+                continue
             if agents_filter and agent not in agents_filter:
                 ctx.plan.append(PlanItem("skip", name, agent, "未选(过滤)"))
                 continue
-            deploy_root = machines.get_skills_dir(machine, agent)
             detail = str(deploy_root / name)
 
             # ZCode 特判:目标是真实目录 → deferred(emitter 执行时也会判, 计划期先给准确预告)

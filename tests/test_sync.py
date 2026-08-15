@@ -210,3 +210,19 @@ def test_sync_prompt_injected_for_missing_capability(tmp_path):
     raw = (tmp_path / "claude" / "img" / "SKILL.md").read_bytes()
     assert "\u26a0\ufe0f".encode() in raw, "缺能力硬警告应注入"
     assert raw.endswith(body), "body 仍字节等值(前言在外面)"
+
+
+def test_sync_agent_not_installed_skipped_no_orphan_dirs(tmp_path):
+    """机器配置了 agent 但其 home 目录不存在(没装)→ skip 且绝不 mkdir 造孤儿目录。"""
+    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    # 配一个"没装"的: 父目录不存在
+    machines.set_skills_dir("m1", "Codex", str(tmp_path / "nope" / ".codex" / "skills"))
+    _write_canonical(repo, "demo")
+    ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
+    skips = [i for i in ctx.plan if i.kind == "skip" and i.agent == "Codex"]
+    assert skips and "未安装" in skips[0].detail
+    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    assert not (tmp_path / "nope").exists(), "不允许为没装的 agent 造目录"
+    assert manifest.find("demo", machine="m1", agent="Codex") == []
+    # 对照: ClaudeCode(父目录在? 不在! tmp_path/claude 的父是 tmp_path 存在)正常部署
+    assert (tmp_path / "claude" / "demo" / "SKILL.md").exists()
