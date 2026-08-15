@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deli_AutoResearch"
+  short_description: "Autonomous research loop protocol"
+  default_prompt: "Use $deli-autoresearch to set up a durable autonomous research task that coordinates fresh work sessions, heartbeat checks, verification, and paper-writing skills."

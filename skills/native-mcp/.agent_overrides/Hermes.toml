@@ -1,0 +1,16 @@
+author = "Hermes Agent"
+platforms = [
+    "linux",
+    "macos",
+    "windows",
+]
+
+[metadata.hermes]
+tags = [
+    "MCP",
+    "Tools",
+    "Integrations",
+]
+related_skills = [
+    "mcporter",
+]

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper Experiment Design"
+  short_description: "Paper experiment planning"
+  default_prompt: "Use $paper-experiment-design to design controlled experiments, statistics, and reporting artifacts for a scientific paper claim."

@@ -1,0 +1,10 @@
+author = "Hermes"
+
+[metadata.hermes]
+tags = [
+    "AI-Agents",
+    "Daily-Briefing",
+    "GitHub-Trending",
+    "Weather",
+    "Chinese",
+]

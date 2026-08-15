@@ -1,0 +1,51 @@
+{
+  "skill_name": "print",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请把这份 PDF 打印出来，先检查会用到哪台打印机，再给我最终打印命令或执行结果：/Users/jiangbin/Documents/report.pdf",
+      "expected_output": "Resolves the target printer safely, uses preview/dry-run if details are missing, then prints or returns a concrete execution plan.",
+      "files": [
+        "/Users/jiangbin/Documents/report.pdf"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "把 `contract.docx` 打 2 份，长边双面，走默认打印机；如果默认打印机不存在，就先列出可用打印机。",
+      "expected_output": "Converts contract.docx to PDF, prints with 2 copies and long-edge duplex, or fails safely with available printer choices.",
+      "files": [
+        "contract.docx"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "把当前文件夹所有 PDF 批量打印，但先 dry-run，不要真的出纸。",
+      "expected_output": "Builds a batch print plan with no side effects, returning per-file results and aggregate success counters.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "帮我打印这个文件：budget.xlsx。如果 LibreOffice 没装，要明确告诉我缺什么。",
+      "expected_output": "Fails with CONVERSION_FAILED and actionable setup guidance when Office-to-PDF conversion is unavailable.",
+      "files": [
+        "budget.xlsx"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "在 Windows 上把 `slides.pdf` 打到 `Finance Color Printer`，如果 lpr 不可用就自动改走 pdf-to-printer。",
+      "expected_output": "Uses lpr when available or falls back to pdf-to-printer without changing the user intent.",
+      "files": [
+        "slides.pdf"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "打印 `confidential.pdf`，但我还没告诉你打印机，也没说单双面。先别直接打印。",
+      "expected_output": "Does not send a real print job immediately; instead resolves ambiguity through preview, dry-run, or printer listing.",
+      "files": [
+        "confidential.pdf"
+      ]
+    }
+  ]
+}

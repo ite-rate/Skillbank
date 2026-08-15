@@ -1,0 +1,19 @@
+author = "Hermes Agent"
+platforms = [
+    "linux",
+    "macos",
+    "windows",
+]
+
+[metadata.hermes]
+tags = [
+    "Research",
+    "Archives",
+    "Wayback",
+    "Paywall",
+    "WAF",
+    "Fallback",
+]
+related_skills = [
+    "grounded-citations",
+]

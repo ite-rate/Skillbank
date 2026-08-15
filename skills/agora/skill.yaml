@@ -1,0 +1,7 @@
+name: agora
+description: "Agora — 覆盖人生全场景的多领域审议技能集合。6个审议室(Room)，31位思想家(13 agora + 18 council)，智能路由，黑格尔正反合结构。自包含，无需额外依赖。"
+version: "0.2.0"
+author: "Professor Li"
+type: skill
+tags: [deliberation, multi-agent, council, life-decisions, philosophy, psychology, strategy]
+license: MIT

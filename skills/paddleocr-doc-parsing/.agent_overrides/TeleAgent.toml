@@ -1,0 +1,8 @@
+[metadata.openclaw]
+emoji = "📄"
+homepage = "https://github.com/PaddlePaddle/PaddleOCR/tree/main/skills/paddleocr-doc-parsing"
+
+[metadata.openclaw.requires]
+bins = [
+    "python",
+]

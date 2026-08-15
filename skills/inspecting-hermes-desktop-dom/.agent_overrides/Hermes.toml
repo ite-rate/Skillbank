@@ -1,0 +1,21 @@
+author = "Hermes Agent"
+platforms = [
+    "linux",
+    "macos",
+    "windows",
+]
+
+[metadata.hermes]
+tags = [
+    "desktop",
+    "electron",
+    "cdp",
+    "dom",
+    "ui-verification",
+    "self-inspection",
+]
+related_skills = [
+    "node-inspect-debugger",
+    "systematic-debugging",
+    "dogfood",
+]

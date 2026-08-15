@@ -1,0 +1,4 @@
+interface:
+  display_name: "Paper Guardrails"
+  short_description: "Research paper runtime guardrails"
+  default_prompt: "Use $paper-guardrails to keep research-paper tasks aligned with my direction, triage scope-sensitive feedback, and verify execution without replacing specialized skills."

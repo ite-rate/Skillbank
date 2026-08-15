@@ -1,0 +1,11 @@
+author = "Hermes"
+
+[metadata.hermes]
+tags = [
+    "codex",
+    "sessions",
+    "forensics",
+    "history",
+    "workspace",
+    "troubleshooting",
+]

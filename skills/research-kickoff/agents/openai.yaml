@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Kickoff"
+  short_description: "Build research kickoff prompts"
+  default_prompt: "Use $research-kickoff to interview me and produce a copy-ready first prompt for discovering a reliable research-paper direction."

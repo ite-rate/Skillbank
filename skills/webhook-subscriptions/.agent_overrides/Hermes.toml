@@ -1,0 +1,15 @@
+platforms = [
+    "linux",
+    "macos",
+    "windows",
+]
+
+[metadata.hermes]
+tags = [
+    "webhook",
+    "events",
+    "automation",
+    "integrations",
+    "notifications",
+    "push",
+]
