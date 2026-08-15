@@ -296,9 +296,65 @@ def _cmd_list(args: argparse.Namespace) -> int:
 # --- doctor ---
 
 
+def _doctor_skill_check(skill_name: str) -> int:
+    """--skill <name>: 深 check body 引用 vs skill_dir 资源一致性(P0 #15)。
+
+    防 "skill 调 py 因资源没 sync 过去 → 静默失败 → 你只觉得 LLM 质量差" 的盲区。
+    SkillBank 责任到此为止:LLM 真跑通 py 不是它管,但引用文件缺失可识别。
+    """
+    from skillbank.parsers.canonical import parse_canonical
+    from skillbank.refs import BodyRefIssue, check_body_refs, resource_stats
+
+    skill_dir = REPO_ROOT / "skills" / skill_name
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.exists():
+        print(f"[doctor --skill] canonical 不存在: skills/{skill_name}/")
+        return 2
+
+    print(f"[doctor --skill] {skill_name}")
+    print(f"  canonical: {skill_dir}")
+
+    # 1. 资源镜像统计
+    res = resource_stats(skill_dir)
+    print(f"  资源镜像: {res or '(无资源)'}")
+
+    # 2. body 引用与资源对应 check
+    try:
+        ir = parse_canonical(skill_md)
+    except Exception as e:  # noqa: BLE001
+        print(f"  ✗ canonical SKILL.md 解析失败: {e}")
+        return 1
+    issues = check_body_refs(ir.body, skill_dir)
+
+    if not issues:
+        print(f"  body 引用检查: body 里无相对路径引用(scripts/refs/templates/...), 无可查项")
+        return 0
+
+    n_missing = sum(1 for i in issues if i.severity == "missing")
+    n_ok = sum(1 for i in issues if i.severity == "ok")
+    for it in issues:
+        print(f"    {it}")
+    print(f"  合计: ✓{n_ok} 引用文件存在 / ✗{n_missing} 缺失")
+
+    # 3. 缺失明细 + 建议
+    if n_missing:
+        print(f"\n  ⚠ SkillBank 端无法帮你修(资源本应有未镜像 = 你 import 时漏了资源):")
+        for it in issues:
+            if it.severity == "missing":
+                print(f"    {it.detail}")
+        print(f"    建议:检查源 skill 目录是否完整;或 `skillbank import --force <源> 重导一次`")
+        return 1
+    print(f"  body 引用与镜像资源一致 ✓")
+    return 0
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     from skillbank.manifest import DeploymentsManifest
     from skillbank.sync import _iter_canonical_skills
+
+    # --skill <name> 细查基准:body 引用 vs 资源镜像一致性(防 silent failure,P0 #15)
+    if args.skill:
+        return _doctor_skill_check(args.skill)
 
     errors: list[str] = []
     warns: list[str] = []
@@ -570,6 +626,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("doctor", help="Env check: configs / paths / manifest / canonical / git")
     sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--skill", help="专项深查某 skill:body 引用 vs 资源镜像一致性(防 silent failure)")
     sp.set_defaults(func=_cmd_doctor)
 
     sp = sub.add_parser("scan", help="探测本机 Agent skills 目录, 确认写入 machines.toml")

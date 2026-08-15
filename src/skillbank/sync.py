@@ -256,8 +256,12 @@ def execute(
         )
         manifest.upsert(rec)
         manifest_dirty = True
+        # 资源镜像统计(让 silent failure 可感知:P0 #15)
+        from skillbank.refs import resource_stats
+        res_stat = resource_stats(result.deployed_path.parent)
         extra = f"({result.note})" if result.note else ""
-        print(f"  {result.method} {name} → {agent}{extra}")
+        res_str = f" [资源: {res_stat}]" if res_stat else " [无资源]"
+        print(f"  {result.method} {name} → {agent}{extra}{res_str}")
 
     if manifest_dirty:
         manifest.save()
