@@ -33,13 +33,47 @@ from skillbank.ir import Level, SkillIR
 from skillbank.machines import MachinesConfig
 from skillbank.parsers.canonical import FRONTMATTER_RE
 
-__all__ = ["ImportError_", "import_skill", "detect_source_agent", "import_git_url"]
+__all__ = ["ImportError_", "import_skill", "detect_source_agent", "import_git_url",
+           "short_agent_code", "suggest_variant_name"]
 
 # 导入失败统一抛 ValueError 语义(避免与内置 ImportError 混淆)
 ImportError_ = ValueError
 
+# Agent 名 -> 短唤(重名变体建议名用, 3-5 字符用户可识别)
+_AGENT_SHORT = {
+    "ClaudeCode": "claude",
+    "ZCode": "zcode",
+    "QwenWorkCN": "qwen",
+    "TeleAgent": "tele",
+    "Hermes": "hermes",
+    "Codex": "codex",
+    "kimi-code": "kimi",
+}
+
+
+def short_agent_code(agent: Optional[str]) -> str:
+    if not agent:
+        return "src"
+    return _AGENT_SHORT.get(agent, agent.lower()[:5].replace("-", ""))
+
+
+def suggest_variant_name(base_name: str, agent: Optional[str]) -> str:
+    """不同 body 同名时:原名-native短码(e.g. docx-qwen / humanizer-hermes)。"""
+    return f"{base_name}-{short_agent_code(agent)}"
+
+
 # 跨 skill 目录的相对路径引用(见 "@" 这种通常是 HERMES 跨 skill 的插值)
 _CROSS_DIR_RE = re.compile(r"\.\./[A-Za-z0-9_\-]+/")
+
+
+def _strip_fm_body(skill_md_path: Path) -> bytes:
+    """读 SKILL.md 切出 body 部分(用于重名时 body 比较)。
+
+    frontmatter 边界正则用法同 parser;失败回退整文件(让比较自然走不算)。
+    """
+    raw = Path(skill_md_path).read_bytes()
+    m = FRONTMATTER_RE.match(raw)
+    return m.group("body") if m else raw
 
 
 def scan_body_paths(body: bytes) -> list[str]:
@@ -92,10 +126,18 @@ def import_skill(
     machines: Optional[MachinesConfig] = None,
     machine: str = "mac-main",
     force: bool = False,
+    rename_callback=None,
+    auto_rename: bool = True,
 ) -> tuple[Path, list[str]]:
     """导入一个 skill 目录(须含 SKILL.md)→ skills/<name>/。
 
     返回 (canonical 目录, body 路径警告列表):警告描述人话字符串, [] 表示无。
+
+    重名策略(用户拍板 2026-08-15):
+    - 同 body 同名(软链共享同一份真身)       -> 静默去重;已存在的就是它,不交互
+    - 不同 body 同名(客端真重名, e.g. docx 三家版) -> 交互改名;
+        建议名 = 原名-native短码(e.g. docx-qwen)。rename_callback 决定终名
+    - force=True  -> 同 body 也允许重入(重生成 canonical, 覆盖同 body 同名)
     """
     src_dir = Path(src_dir).resolve()
     skill_md = src_dir / "SKILL.md"
@@ -125,8 +167,38 @@ def import_skill(
     if native is None and machines is not None:
         native = detect_source_agent(src_dir, machines, machine)
 
+    # === 重名处理 ===
+    dst = repo_root / "skills" / name
+    if dst.exists():
+        existing_body = _strip_fm_body(dst / "SKILL.md")
+        if existing_body == body and not force:
+            # 同 body 同名:静默去重,返回已存在的(重复 import 不报错也不覆盖)
+            return dst, [f"已存在同内容同名的 {dst.name}, 跳过(软链共享去重)"]
+        if existing_body == body and force:
+            ir_name = name  # 极少需要重写同 body, 允许
+        else:
+            # 不同 body 同名 -> 交互/自动改名
+            suggested = suggest_variant_name(name, native)
+            if rename_callback is not None:
+                name = rename_callback(name, suggested, native or "")
+            elif auto_rename:
+                name = suggested
+            else:
+                raise ImportError_(
+                    f"canonical 已存在且 body 不同: {dst}。"
+                    f"建议名 {suggested}(本 import 仅在 CLI 交互/auto_rename=True 时生效)"
+                )
+            ir_name = name  # canonical 用新名
+            dst = repo_root / "skills" / name
+            if dst.exists() and not force:
+                raise ImportError_(
+                    f"改名后仍冲突 {dst}(--force 覆盖, 或用别的名)"
+                )
+    else:
+        ir_name = name
+
     ir = SkillIR(
-        name=name,
+        name=ir_name,
         description=str(description),
         body=body,
         level=Level(level),
@@ -137,10 +209,7 @@ def import_skill(
         license=str(fm["license"]) if fm.get("license") is not None else None,
     )
 
-    dst = repo_root / "skills" / name
-    if dst.exists():
-        if not force:
-            raise ImportError_(f"canonical 已存在 {dst}(--force 覆盖)")
+    if dst.exists() and force:
         shutil.rmtree(dst)
     dst.mkdir(parents=True)
 

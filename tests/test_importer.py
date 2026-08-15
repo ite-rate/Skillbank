@@ -120,14 +120,73 @@ def test_import_missing_description_raises(tmp_path):
         import_skill(src, repo)
 
 
-def test_import_existing_canonical_raises_unless_force(tmp_path):
+def test_import_existing_canonical_same_body_silent_dedup(tmp_path):
+    """同 body 同名(重复 import 同源) -> 静默去重返回,不 raise(用户拍板)。"""
     src = _mk_agent_skill(tmp_path, "some-skills", "dup", ["name: dup", "description: x"])
     repo = tmp_path / "repo"
     repo.mkdir()
-    import_skill(src, repo)
-    with pytest.raises(ValueError, match="已存在"):
-        import_skill(src, repo)
-    import_skill(src, repo, force=True)   # force 覆盖 ok
+    d1, _ = import_skill(src, repo)
+    # 第二次同 body:不抛,返回已存在的,带 dedup 警告
+    d2, warns = import_skill(src, repo)
+    assert d1 == d2, "同 body 重复 import 应静默返回已存在的"
+    assert any("去重" in w for w in warns)
+    # force 仍允许重生(用户想重覆盖时)
+    d3, _ = import_skill(src, repo, force=True)
+    assert d3.exists()
+
+
+def test_import_existing_canonical_diff_body_no_auto_rename_raises(tmp_path):
+    """不同 body 同名且 auto_rename=False 且无 callback -> 仍抛(防自动覆盖)。"""
+    s1 = _mk_agent_skill(tmp_path, "sk1", "dup", ["name: dup", "description: x"],
+                         body=b"## A\n")
+    s2 = _mk_agent_skill(tmp_path, "sk2", "dup", ["name: dup", "description: x"],
+                         body=b"## B body\n")
+    repo = tmp_path / "repo"; repo.mkdir()
+    import_skill(s1, repo, auto_rename=False)
+    with pytest.raises(ValueError, match="已存在且 body 不同"):
+        import_skill(s2, repo, auto_rename=False)
+
+
+def test_import_diff_body_auto_rename(tmp_path):
+    """不同 body 同名 + auto_rename=True -> 自动用建议名(原名-native烖码)。"""
+    s1 = _mk_agent_skill(tmp_path, "sk1", "dup", ["name: dup", "description: x"],
+                         body=b"## A\n")
+    s2 = _mk_agent_skill(tmp_path, "sk2", "dup", ["name: dup", "description: x"],
+                         body=b"## B\n")
+    repo = tmp_path / "repo"; repo.mkdir()
+    d1, _ = import_skill(s1, repo, auto_rename=True, agent="ClaudeCode")
+    assert d1.name == "dup"
+    # 第二次不同 body 来自 TeleAgent -> 自动建议名 dup-tele
+    d2, _ = import_skill(s2, repo, auto_rename=True, agent="TeleAgent")
+    assert d2.name == "dup-tele", f"建议名应为 dup-tele, got {d2.name}"
+    assert (repo / "skills" / "dup").exists() and (repo / "skills" / "dup-tele").exists()
+
+
+def test_import_diff_body_rename_callback(tmp_path):
+    """不同 body 同名 + rename_callback -> 用 callback 返回的名(用户自决)。"""
+    s1 = _mk_agent_skill(tmp_path, "sk1", "dup", ["name: dup", "description: x"],
+                         body=b"## A\n")
+    s2 = _mk_agent_skill(tmp_path, "sk2", "dup", ["name: dup", "description: x"],
+                         body=b"## B\n")
+    repo = tmp_path / "repo"; repo.mkdir()
+    import_skill(s1, repo, auto_rename=False)
+    # callback 决定改名 office-dup
+    cb = lambda orig, suggested, native: "office-dup"   # noqa: E731
+    d2, _ = import_skill(s2, repo, auto_rename=False, rename_callback=cb, agent="Hermes")
+    assert d2.name == "office-dup"
+    # 建议名应是 dup-hermes
+    from skillbank.importer import suggest_variant_name
+    assert suggest_variant_name("dup", "Hermes") == "dup-hermes"
+
+
+def test_short_agent_code_and_suggest():
+    from skillbank.importer import short_agent_code, suggest_variant_name
+    assert short_agent_code("QwenWorkCN") == "qwen"
+    assert short_agent_code("TeleAgent") == "tele"
+    assert short_agent_code("ClaudeCode") == "claude"
+    assert short_agent_code(None) == "src"
+    assert suggest_variant_name("docx", "QwenWorkCN") == "docx-qwen"
+    assert suggest_variant_name("humanizer", "Hermes") == "humanizer-hermes"
 
 
 def test_import_no_frontmatter_raises(tmp_path):

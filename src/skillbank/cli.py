@@ -104,9 +104,14 @@ def _cmd_add(args: argparse.Namespace) -> int:
     from skillbank.importer import import_git_url, import_skill
 
     src = args.source
+    rename_kw = (
+        {"rename_callback": _rename_callback} if _is_tty() and not args.yes
+        else {"auto_rename": True}
+    )
     try:
         if src.startswith(("http://", "https://", "git@", "ssh://")):
-            results = import_git_url(src, REPO_ROOT, level=args.level, force=args.force)
+            results = import_git_url(src, REPO_ROOT, level=args.level, force=args.force,
+                                     **rename_kw)
             for d, warns in results:
                 print(f"[add] 导入 → {d}")
                 for w in warns:
@@ -114,15 +119,29 @@ def _cmd_add(args: argparse.Namespace) -> int:
         else:
             d, warns = import_skill(Path(src).expanduser(), REPO_ROOT,
                                    level=args.level, force=args.force,
-                                   machines=_load_configs()[1], machine=args.machine)
+                                   machines=_load_configs()[1], machine=args.machine,
+                                   **rename_kw)
             print(f"[add] 导入 → {d}")
             for w in warns:
                 print(f"  ⚠ {w}")
         print(f"[add] 下一步: skillbank sync 同步到各 Agent")
         return 0
     except ValueError as e:
-        print(f"[add] ✗ {e}")
-        return 1
+        print(f"[add] {'跳过' if '跳过' in str(e) else '✗'}: {e}")
+        return 0 if "跳过" in str(e) else 1
+
+
+def _rename_callback(orig_name: str, suggested: str, native: str):
+    """重名时交互问改名顺序:回车=建议名 / m=<自定> / s=skip。"""
+    print(f"\n  ⚠ 重名冲突: name={orig_name!r} body 与既有不同"
+          f"(native={native or '?'})")
+    print(f"  建议名: {suggested}")
+    ans = input(f"  改名为? [回车={suggested} / m=<自定名> / s=跳过]: ").strip()
+    if ans.lower() == "s":
+        raise ValueError("user 跳过此次 import")
+    if ans.lower().startswith("m=") and len(ans) > 2:
+        return ans[2:].strip()
+    return suggested
 
 
 def _cmd_import(args: argparse.Namespace) -> int:
@@ -134,15 +153,26 @@ def _cmd_import(args: argparse.Namespace) -> int:
         if agent and agent not in agents_cfg.agents:
             print(f"[import] 未知 agent {agent!r}(agents.toml: {sorted(agents_cfg.agents)})")
             return 2
-        d, warns = import_skill(Path(args.path).expanduser(), REPO_ROOT,
-                                level=args.level, agent=agent,
-                                machines=machines, machine=args.machine, force=args.force)
+        kwargs = dict(
+            level=args.level, agent=agent,
+            machines=machines, machine=args.machine, force=args.force,
+        )
+        # 重名时交互改名(tty) or auto_rename(非 tty/--yes)
+        if args.yes or not _is_tty():
+            kwargs["auto_rename"] = True
+        else:
+            kwargs["rename_callback"] = _rename_callback
+        d, warns = import_skill(Path(args.path).expanduser(), REPO_ROOT, **kwargs)
         print(f"[import] → {d}")
         for w in warns:
             print(f"  ⚠ {w}")
         print(f"[import] 下一步: skillbank sync 同步到各 Agent")
         return 0
     except ValueError as e:
+        msg = str(e)
+        if "user 跳过" in msg or "改名后仍冲突" in msg:
+            print(f"[import] 跳过: {e}")
+            return 0
         print(f"[import] ✗ {e}")
         return 1
 
@@ -462,6 +492,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--level", default="manual", choices=[l.value for l in Level])
     sp.add_argument("--force", action="store_true", help="覆盖已存在的 canonical")
     sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--yes", action="store_true", help="重名冲突时自动用建议名(不交互)")
     sp.set_defaults(func=_cmd_add)
 
     sp = sub.add_parser("import", help="Reverse-import an agent's skill dir into canonical")
@@ -470,6 +501,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--agent", help="来源 agent 名(不填按路径自动探测)")
     sp.add_argument("--force", action="store_true")
     sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--yes", action="store_true", help="重名自动用建议名, 不交互")
     sp.set_defaults(func=_cmd_import)
 
     sp = sub.add_parser("rm", help="Remove a skill + clean deployed copies (canonical kept)")
