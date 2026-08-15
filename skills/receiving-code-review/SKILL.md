@@ -1,7 +1,8 @@
 ---
-name: receiving-code-review
+name: receiving-code-review-hermes
 description: Use when receiving code review feedback, before implementing suggestions, especially if feedback seems unclear or technically questionable - requires technical rigor and verification, not performative agreement or blind implementation
 level: manual
+native_agent: Hermes
 ---
 
 # Code Review Reception
@@ -24,6 +25,20 @@ WHEN receiving code review feedback:
 5. RESPOND: Technical acknowledgment or reasoned pushback
 6. IMPLEMENT: One item at a time, test each
 ```
+
+## Grilling Mode for Plans and Designs
+
+Use this same skill for non-code plans when the user asks to "grill", "拷问", "stress-test", "评估方案会不会有坑", or links to Matt Pocock's `grilling` skill. Do not limit the skill to code review.
+
+Pattern:
+1. Restate the plan and the decision currently under review.
+2. Walk the design tree one dependency at a time: goals → constraints → data/control flow → failure modes → rollback → cost/complexity → YAGNI.
+3. Ask **one question at a time** and wait for the user's answer before continuing; multiple questions at once are bewildering.
+4. For each question, provide your recommended answer or default judgment so the user is not left with an open-ended interrogation.
+5. If a question can be answered by inspecting files, code, docs, config, or repo state, inspect first instead of asking the user.
+6. End with a concise risk list, recommended path, and explicit assumptions that remain unresolved.
+
+See `references/grilling-plan-stress-test.md` for the external skill note and reusable prompt shapes.
 
 ## Forbidden Responses
 
