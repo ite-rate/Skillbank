@@ -45,6 +45,7 @@ def test_deployed_zero_loss_semantics_with_prompt(tmp_path):
                 native_agent="Hermes", requires=["image_generation"]),
         canon_dir / "SKILL.md",
     )
+    (canon_dir / "scripts").mkdir()
     (canon_dir / "scripts" / "run.py").write_text("print(1)\n")
 
     agents_cfg = AgentsConfig.load(REPO_ROOT / "agents.toml")
