@@ -2,7 +2,6 @@
 name: clinic
 description: Clinic (诊疗室) — Psychological resilience deliberation room. Convene Skinner, Frankl, Aurelius, Kahneman, Zhuangzi, and Jung for anxiety, procrastination, burnout, and loss recovery.
 level: auto
-native_agent: ZCode
 ---
 
 # /clinic — 诊疗室 (The Clinic)

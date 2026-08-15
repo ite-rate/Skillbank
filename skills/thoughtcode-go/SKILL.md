@@ -2,7 +2,6 @@
 name: thoughtcode-go
 description: Use when the user wants to read or write Go source code as 思路码 (thought-code) — a Chinese-natural-language projection of Go that strips syntax noise (method calls, type annotations, C-style operators, chained accessors) while preserving structural anchors (functions, fields, control flow) so the reader brain does zero syntax parsing. Typical triggers include 用思路码过一下这段 Go, 把这份 Go 翻译成思路码, 思路码过 leetcode 题, 省掉语法噪音帮我读这个 Go 文件. Currently Go-only.
 level: auto
-native_agent: ZCode
 ---
 
 # Thoughtcode (Go 版)

@@ -2,7 +2,6 @@
 name: oracle
 description: Oracle (神谕所) — Life crossroads deliberation room. Convene Sartre, Aurelius, Jung, Frankl, Nietzsche, and Kahneman for major life decisions, career transitions, and existential questions.
 level: auto
-native_agent: ZCode
 ---
 
 # /oracle — 神谕所 (The Oracle)

@@ -2,7 +2,6 @@
 name: release-orchestrator
 description: Coordinate software release preparation, rollout readiness, migration notes, rollback planning, stakeholder communication, and final go/no-go release packets. Use when asked to prepare a release packet, review release readiness, or turn scattered launch notes into one reusable release workflow. Do not use for generic project planning, one-off announcement drafting, or high-level release theory.
 level: auto
-native_agent: ZCode
 ---
 
 # Release Orchestrator
