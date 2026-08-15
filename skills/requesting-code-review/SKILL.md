@@ -1,5 +1,5 @@
 ---
-name: requesting-code-review-hermes
+name: requesting-code-review
 description: 'Pre-commit review: security scan, quality gates, auto-fix.'
 level: auto
 native_agent: Hermes

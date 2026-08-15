@@ -1,5 +1,5 @@
 ---
-name: humanizer-hermes
+name: humanizer
 description: 'Humanize text: strip AI-isms and add real voice.'
 level: auto
 native_agent: Hermes

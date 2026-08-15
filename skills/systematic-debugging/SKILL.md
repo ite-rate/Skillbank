@@ -1,5 +1,5 @@
 ---
-name: systematic-debugging-hermes
+name: systematic-debugging
 description: '4-phase root cause debugging: understand bugs before fixing.'
 level: auto
 native_agent: Hermes
