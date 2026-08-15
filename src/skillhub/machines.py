@@ -93,6 +93,52 @@ class MachinesConfig:
     def machines_with_agent(self, agent: str) -> list[str]:
         return [name for name, m in self.machines.items() if agent in m.agents]
 
+    def set_skills_dir(self, machine: str, agent: str, skills_dir: str) -> None:
+        """scan 确认后写回内存;再 render+save 落盘。机器不存在则建。"""
+        m = self.machines.setdefault(
+            machine, MachineConfig(name=machine, display_name=machine)
+        )
+        m.agents[agent] = AgentInstall(skills_dir=skills_dir)
+
+    def render_toml(self) -> str:
+        """重新生成 machines.toml 文本(标准头部注释 + 全部机器/Agent)。
+
+        注意: 会丢弃手写的行内注释(TODO 之类)—scan 确认过的值本身就是结论。
+        """
+        lines = [
+            "# Skill-Hub machines.toml — 每机器 × 每 Agent 手填/scan 确认的完整绝对路径",
+            "#",
+            "# 规则:",
+            "#   - skills_dir 完整绝对路径(不支持 ~);由 `skillhub scan` 在该机器上",
+            "#     自动探测 + 确认后写入, 也可手改",
+            "#   - 不列某 Agent = 该机器没装, sync 跳过不报错",
+            "#   - agents.toml 的 install_dir 仅为文档参考, 唯一真相源是本文件",
+            "",
+        ]
+        for m_name in sorted(self.machines):
+            m = self.machines[m_name]
+            lines.append(f"[machines.{m_name}]")
+            lines.append(f'display_name = "{m.display_name}"')
+            lines.append("")
+            for a_name in m.agents:
+                inst = m.agents[a_name]
+                lines.append(f"[machines.{m_name}.agents.{a_name}]")
+                lines.append(f'skills_dir = "{inst.skills_dir}"')
+                lines.append("")
+        return "\n".join(lines)
+
+    def save(self, path: Optional[Path] = None) -> None:
+        """render_toml 原子写回。"""
+        p = Path(path or self.path) if (path or self.path) else None
+        if p is None:
+            raise ValueError("no machines.toml path given")
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix(".toml.tmp")
+        tmp.write_text(self.render_toml(), encoding="utf-8")
+        import os as _os
+
+        _os.replace(tmp, p)
+
     def check_paths_exist(self, machine: str) -> tuple[list[str], list[str]]:
         """doctor 用:该机器配置的所有 skills_dir 盘上存在性。
 

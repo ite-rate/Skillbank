@@ -113,6 +113,83 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_scan(args: argparse.Namespace) -> int:
+    """扫描本机各 Agent 的 skills 目录, 确认后写入 machines.toml。
+
+    只应在目标机器本机跑(探测的是本机文件系统)。
+    已配置且盘上存在的路径保持不动;缺失/无效的给候选让用户选。
+    """
+    import sys
+
+    from skillhub.agents import AgentsConfig
+    from skillhub.machines import MachinesConfig
+    from skillhub.scan import detect_agent, pick_best
+
+    agents_cfg = AgentsConfig.load(REPO_ROOT / "agents.toml")
+    machines = MachinesConfig.load(
+        REPO_ROOT / "machines.toml", known_agents=set(agents_cfg.agents)
+    )
+    machine = args.machine
+
+    agent_order = list(agents_cfg.agents)  # agents.toml 的顺序
+    changes: dict[str, str] = {}           # agent -> 新 skills_dir
+
+    print(f"[scan] 机器 {machine!r} — 探测本机 7 个 Agent 的 skills 目录\n")
+
+    for agent in agent_order:
+        cur = machines.get_skills_dir(machine, agent)
+        if cur is not None and cur.exists():
+            print(f"  ✓ {agent:12s} 保持 {cur}(已配置且存在)")
+            continue
+        if cur is not None:
+            print(f"  ? {agent:12s} 已配置 {cur} 但盘上不存在")
+        cands = detect_agent(agent)
+        if not cands:
+            print(f"  ✗ {agent:12s} 未探测到(没装?), 跳过 = sync 时忽略该 Agent")
+            continue
+        for i, c in enumerate(cands, 1):
+            print(f"    [{i}] {c.path}  ({c.confidence}: {c.evidence})")
+        if args.dry_run:
+            best = pick_best(cands)
+            print(f"    (dry-run) 将选 [{cands.index(best) + 1}] {best.path}")
+            continue
+        if args.yes or not sys.stdin.isatty():
+            best = pick_best(cands)
+            changes[agent] = str(best.path)
+            print(f"    → 自动选 {best.path}({best.confidence})")
+            continue
+        # 交互: 序号选择 / 手输路径 / 回车跳过
+        default_idx = cands.index(pick_best(cands)) + 1
+        ans = input(f"    用哪个? [1-{len(cands)}](回车={default_idx}) / m=<路径>手输 / s跳过: ").strip()
+        if ans.lower() == "s":
+            print(f"    → 跳过 {agent}")
+            continue
+        if ans.lower().startswith("m=") and len(ans) > 2:
+            changes[agent] = ans[2:]
+            print(f"    → 手输 {ans[2:]}")
+        else:
+            try:
+                idx = int(ans) if ans else default_idx
+                changes[agent] = str(cands[idx - 1].path)
+                print(f"    → 选 [{idx}] {cands[idx - 1].path}")
+            except (ValueError, IndexError):
+                print(f"    → 输入无法解析, 跳过 {agent}")
+                continue
+
+    if args.dry_run:
+        print("\n[scan] dry-run 结束, 未写任何文件")
+        return 0
+    if not changes:
+        print("\n[scan] 无变更, machines.toml 未动")
+        return 0
+
+    for agent, dir_path in changes.items():
+        machines.set_skills_dir(machine, agent, dir_path)
+    machines.save(REPO_ROOT / "machines.toml")
+    print(f"\n[scan] machines.toml 已更新: {', '.join(changes)}")
+    return 0
+
+
 # --- argparse wiring ---
 
 
@@ -170,6 +247,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate environment: agent dirs / git / manifest / kimi --skills-dir",
     )
     sp.set_defaults(func=_cmd_doctor)
+
+    sp = sub.add_parser(
+        "scan",
+        help="扫描本机各 Agent skills 目录, 确认后写入 machines.toml(在目标机器上跑)",
+    )
+    sp.add_argument("--machine", default="mac-main", help="当前机器别名(machines.toml)")
+    sp.add_argument("--yes", action="store_true", help="非交互: 每项自动选最优候选")
+    sp.add_argument("--dry-run", action="store_true", help="只展示探测结果, 不确认不写")
+    sp.set_defaults(func=_cmd_scan)
 
     return p
 
