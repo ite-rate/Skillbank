@@ -1,7 +1,7 @@
 ---
 name: create-skill
 description: Guides users through creating effective Agent Skills for QwenWork. Use when the user wants to create, write, or author a new skill, or asks about skill structure, best practices, or SKILL.md format.
-level: manual
+level: auto
 native_agent: QwenWorkCN
 description_zh: 引导用户为 QwenWork 创建有效的 Agent 技能。当用户想要创建、编写或制作新技能，或询问技能结构、最佳实践或 SKILL.md 格式时使用。
 version: 1.1.0

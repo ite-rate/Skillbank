@@ -1,7 +1,7 @@
 ---
 name: bazaar
 description: Bazaar (集市) — Business & strategy deliberation room. Convene Schumpeter, Munger, Sun Tzu, Machiavelli, Taleb, and Kahneman for market decisions, pricing, investment, and competitive strategy.
-level: manual
+level: auto
 native_agent: ZCode
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: deep-research
 description: 深度研究技能：当用户需要"帮我调研"、"全面调查"、"深入研究"、"生成研究报告"、"市场调研"、"行业分析"等综合性研究任务时使用。执行多阶段研究流程，包含问题细化、多源搜索、交叉验证和引用标注。输出带有完整引用来源的专业研究报告。
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 能围绕用户指定主题自动开展深度调研，跨来源收集并分析信息，并输出结构化研究结果。
 name_zh: 深度调研

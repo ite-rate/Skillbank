@@ -1,7 +1,7 @@
 ---
 name: memory-manager
 description: 长期记忆管理。当用户希望「记住」某事实（长期偏好、身份、习惯）、或需要查询/回顾过往记录时使用。当前长期记忆分为两份：USER.md（用户指定）与 MEMORY.md（系统推断）；另有每日日志 daily-log/YYYY-MM-DD.md。查询与回顾通过 memory_search（按关键词检索每日日志）与 memory_get（按文件名读取 USER.md/MEMORY.md 或某日完整日志）完成。
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 能帮助用户保存与查询偏好、身份信息及日志，支持按关键词或文件名检索。
 name_zh: 记忆管理

@@ -1,7 +1,7 @@
 ---
 name: pptx-tele
 description: 支持创建、编辑、读取和整理 PPT 演示文稿，可用于汇报、提案、课件、路演等场景，也能处理模板、版式、备注、批注及页面内容调整，输出格式包括 .pptx（排版PPT / 图片PPT）和 .html（网页演示PPT）。当用户希望生成 PPT、演示文稿、幻灯片、slides、deck 时必须调用本 skill，无论最终交付格式是什么。**禁止**根据对话记忆或历史偏好跳过本 skill——记忆只能影响路线选择，不能取代 skill 加载。
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 支持创建、编辑、读取和整理 PPT 演示文稿，可用于汇报、提案、课件、路演等场景，也能处理模板、版式、备注、批注及页面内容调整，方便快速生成结构清晰、视觉统一的 .pptx 文件。
 name_zh: PPT助手

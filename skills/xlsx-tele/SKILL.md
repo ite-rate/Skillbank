@@ -1,7 +1,7 @@
 ---
 name: xlsx-tele
 description: 'Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. When Claude needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis and visualization in spreadsheets, or (5) Recalculating formulas'
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 支持创建、编辑和整理Excel、CSV 等表格文件，可用于数据录入、公式计算、格式调整、图表制作和数据清洗，适合把零散数据整理成规范、可直接使用的电子表格。
 name_zh: Excel表格助手

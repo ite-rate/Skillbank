@@ -1,7 +1,7 @@
 ---
 name: forge
 description: Forge (锻造坊) — Engineering & architecture deliberation room. Convene Feynman, Ada, Torvalds, Popper, Occam, and Nietzsche for code architecture decisions, debugging, refactoring, and code review.
-level: manual
+level: auto
 native_agent: ZCode
 ---
 

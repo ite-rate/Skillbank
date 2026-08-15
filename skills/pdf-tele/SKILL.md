@@ -1,7 +1,7 @@
 ---
 name: pdf-tele
 description: 'Full-spectrum PDF skill: visually polished document generation via token-driven design system (15 doc types, HTML/CSS cover + ReportLab body), plus reading, merging, splitting, form filling, watermarking, encryption, and OCR. CREATE: "make a PDF", "generate report", "beautiful document", "cover page", "client-ready", "polished PDF", "write a proposal". READ: "extract text from PDF", "read this PDF", "what''s in this document". MANIPULATE: "merge PDFs", "split pages", "rotate", "add watermark", "encrypt". FILL: "fill in this form", "complete form fields". REFORMAT: "reformat this document", "apply our style", "convert markdown to PDF".'
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 支持读取、编辑和处理PDF文件，可用于提取文字和表格、合并与拆分页面、旋转与加水印、生成新PDF、填写表单以及对扫描件进行 OCR 识别，适合日常文档整理与内容提取。
 name_zh: PDF助手

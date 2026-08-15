@@ -1,7 +1,7 @@
 ---
 name: pdf-qwen
 description: Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/decrypting PDFs, extracting images, and OCR on scanned PDFs to make them searchable. If the user mentions a .pdf file or asks to produce one, use this skill.
-level: manual
+level: auto
 native_agent: QwenWorkCN
 description_zh: 当用户需要对 PDF 文件执行任何操作时使用此技能。包括：读取或提取 PDF 中的文本/表格、合并多个 PDF、拆分 PDF、旋转页面、添加水印、创建新 PDF、填写 PDF 表单、加密/解密 PDF、提取图片，以及对扫描版 PDF 进行 OCR 使其可搜索。只要用户提及 .pdf 文件或要求生成 PDF，就使用此技能。
 version: 1.0.2

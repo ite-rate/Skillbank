@@ -1,7 +1,7 @@
 ---
 name: bilibili-summary
 description: 当用户发送B站(bilibili.com)视频链接并要求"总结视频内容"、"帮我总结"、"总结一下这个视频/课程"时触发。生成美观的HTML学习报告+MD归档文件。自动识别单集(详细灵活分析)和多P系列(分组折叠+阶段总结)，支持上百集课程快速输出结构化报告。
-level: manual
+level: auto
 native_agent: QwenWorkCN
 name_zh: 视频速读
 version: 1.0.0

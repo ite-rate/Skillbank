@@ -1,7 +1,7 @@
 ---
 name: agora
 description: Agora — Intelligent router for the full deliberation ecosystem. Analyzes your question, routes to the right Room, or lists all available rooms. 6 rooms, 31 thinkers, one entry point.
-level: manual
+level: auto
 ---
 
 # /agora — 智能路由器 (The Agora)

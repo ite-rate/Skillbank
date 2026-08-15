@@ -1,7 +1,7 @@
 ---
 name: requesting-code-review-hermes
 description: 'Pre-commit review: security scan, quality gates, auto-fix.'
-level: manual
+level: auto
 native_agent: Hermes
 version: 2.0.0
 license: MIT

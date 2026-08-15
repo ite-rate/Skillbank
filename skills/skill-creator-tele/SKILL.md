@@ -1,7 +1,7 @@
 ---
 name: skill-creator-tele
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends LLM's capabilities with specialized knowledge, workflows, or tool integrations.
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 手把手引导用户从零创建或迭代 AI 技能，精准应对各类场景。只需描述需求，它将引导你完成技能的创作或优化。
 name_zh: 技能孵化器

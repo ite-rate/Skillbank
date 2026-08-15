@@ -1,7 +1,7 @@
 ---
 name: find-skills
 description: 'Do NOT invoke this skill as a routine first step. Do NOT invoke when any installed skill (see the available skills list) can handle the task, or when general capabilities (writing, coding, analysis, translation, web search) suffice. Invoke ONLY in two cases: (1) the user explicitly asks to find, install, or browse skills / the skill marketplace; (2) no installed skill fits AND the task very likely needs a dedicated skill to be done well (e.g. a specialized file format, a vertical platform workflow). Searches the official QwenWork marketplace, the skills.sh community library, and enterprise skill markets (if available via MCP).'
-level: manual
+level: auto
 native_agent: QwenWorkCN
 description_zh: 不要把本技能当作常规第一步调用。已安装技能（见可用技能列表）能覆盖任务，或通用能力（写作、编码、分析、翻译、联网搜索）就能完成时，一律不要调用。仅两种情况调用：（1）用户显式要求查找/安装/浏览技能或技能市场；（2）本地没有合适技能，且任务大概率必须依靠专用技能才能做好（如特定文件格式处理、垂直平台操作）。搜索范围覆盖官方市场、skills.sh 社区库与企业技能市场（若通过 MCP 可用）。
 version: 1.0.6

@@ -1,7 +1,7 @@
 ---
 name: powerpoint
 description: Create, read, edit .pptx decks, slides, notes, templates.
-level: manual
+level: auto
 native_agent: Hermes
 license: Proprietary. LICENSE.txt has complete terms
 ---

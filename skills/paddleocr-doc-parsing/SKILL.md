@@ -1,7 +1,7 @@
 ---
 name: paddleocr-doc-parsing
 description: Fallback parsing for complex PDFs that the PDF skill cannot handle, using PaddleOCR to preserve tables, formulas, charts, multi-column layouts, and other document structure in Markdown and JSON. Never invoke this skill before first using the PDF skill and determining that it cannot handle the PDF adequately.
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 面向复杂文档的结构化解析工具，精准识别表格、数学公式、图表、多栏内容和版面层级，输出结构清晰的 Markdown 与 JSON 文件，适用于报告解析、资料数字化、内容抽取与结构化归档。
 name_zh: 复杂文档解析

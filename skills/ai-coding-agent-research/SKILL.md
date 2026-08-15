@@ -1,7 +1,7 @@
 ---
 name: ai-coding-agent-research
 description: Use when explaining, evaluating, or comparing AI coding agents, terminal coding assistants, IDE agents, agent CLIs, desktop clients, model-native coding tools, or their installation and GUI options.
-level: manual
+level: auto
 native_agent: Hermes
 ---
 

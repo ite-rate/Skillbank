@@ -1,7 +1,7 @@
 ---
 name: docx-tele
 description: 'Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. When TeleAgent needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks'
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 支持创建、读取、编辑和整理 Word 文档，可用于报告、备忘录、信函、模板等正式文件的生成与排版，也能处理目录、标题、页码、表格、图片、批注和修订记录，适合把零散内容整理成规范、可交付的 .docx 文档。
 name_zh: Word文档助手

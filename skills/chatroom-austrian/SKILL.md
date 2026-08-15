@@ -7,7 +7,7 @@ description: '哈耶克 × 米塞斯 × Claude 三人对话。奥派经济学视
   Austrian economics chatroom. Hayek × Mises × Claude debate.
 
   Trigger: /chatroom-austrian, /奥派, "Austrian chat"'
-level: manual
+level: auto
 native_agent: ClaudeCode
 ---
 

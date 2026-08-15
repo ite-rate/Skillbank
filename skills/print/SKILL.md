@@ -1,7 +1,7 @@
 ---
 name: print
 description: 'Universal document printing for PDF, Word, Excel, PowerPoint, and image files. Use this skill when the user clearly wants to send a file to a real printer, asks for hard copies, print settings, printer selection, print preview, or batch printing. Trigger when the user explicitly says ''print'', ''send to printer'', ''print out'', ''hard copy'', or asks to adjust copies, duplex, paper size, orientation, or page range for a print job. For real printing, default to a safe workflow: verify the target file and printer, preview or dry-run first when details are missing, and require explicit user intent before sending the final print job.'
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 面向日常办公打印场景，支持常见文档一键打印，并智能推荐打印机、份数、单双面打印及纸张参数。
 name_zh: 智能打印

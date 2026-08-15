@@ -1,7 +1,7 @@
 ---
 name: systematic-debugging-hermes
 description: '4-phase root cause debugging: understand bugs before fixing.'
-level: manual
+level: auto
 native_agent: Hermes
 version: 1.1.0
 license: MIT

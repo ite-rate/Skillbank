@@ -9,7 +9,7 @@ description: '从表格文件 (.xlsx / .xlsm / .csv / .tsv) 生成自包含 HTML
   DO NOT TRIGGER: 扩展名不在白名单 (pdf/docx/pptx/txt/图片/xlsb/parquet/ods/numbers); 数据库 SQL 场景 (.db/.sqlite/jdbc/mysql://); 修改/编辑 Excel 本体 (改用 xlsx skill); 数据清洗/去重/合并 (先用 xlsx skill TRANSFORM 后再调本技能); 图片 PDF 中的表格 (先 OCR/pdf-extract); API/HTTP 返回数据 (先落盘 csv/xlsx); 无数据输入仅有分析诉求 (先引导上传文件)。
 
   '
-level: manual
+level: auto
 native_agent: QwenWorkCN
 name_zh: 数据可视化
 version: 1.0.0

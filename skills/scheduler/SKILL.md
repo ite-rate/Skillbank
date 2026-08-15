@@ -1,7 +1,7 @@
 ---
 name: scheduler
 description: 定时任务管理：创建、查看、修改、删除、运行定时任务。用户提到"每天/每周/定时/提醒/每隔"或"明天下午3点/一次性任务"或"查看所有任务/删除任务"时使用。支持 cron 和一次性任务。关键词：每天、每隔、定时、提醒、任务、自动化、schedule、cron、task、reminder、once、job。
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 支持通过自然语言管理定时任务，支持创建、查看、修改与删除
 name_zh: 定时任务

@@ -1,7 +1,7 @@
 ---
 name: daily-agent-briefing
 description: 'Generate a concise Chinese daily briefing — three formats: (A) sectioned report with AI agent case studies + GitHub Trending + tools + weather, (B) Feishu group-chat forwardable numbered news, or (C) compact casual group-chat briefing with GitHub/AI/tech sections and no template headers.'
-level: manual
+level: auto
 native_agent: Hermes
 version: 1.2.0
 license: CC0-1.0

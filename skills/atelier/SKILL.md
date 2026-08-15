@@ -1,7 +1,7 @@
 ---
 name: atelier
 description: Atelier (工作坊) — Creative breakthrough deliberation room. Convene Socrates, Lao Tzu, Watts, Nietzsche, Occam, and Feynman for creative blocks, content strategy, and the creative process.
-level: manual
+level: auto
 native_agent: ZCode
 ---
 

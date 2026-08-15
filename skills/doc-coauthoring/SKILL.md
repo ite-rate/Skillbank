@@ -1,7 +1,7 @@
 ---
 name: doc-coauthoring
 description: Guide users through a structured workflow for co-authoring documentation. Supports internal templates and both Western (PRD, RFC, decision doc) and domestic (技术方案, 需求说明, 评审文档, 立项书) doc types. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This workflow helps users efficiently transfer context, refine content through iteration (following workflow logic), and verify the doc works for readers. Trigger when user mentions writing docs, creating proposals, drafting specs, 写技术方案, 写需求文档, or similar documentation tasks.
-level: manual
+level: auto
 native_agent: TeleAgent
 description_zh: 帮你高效完成各类文档写作、优化与结构化整理。
 name_zh: 文档辅写

@@ -1,7 +1,7 @@
 ---
 name: humanizer-hermes
 description: 'Humanize text: strip AI-isms and add real voice.'
-level: manual
+level: auto
 native_agent: Hermes
 version: 2.5.1
 license: MIT

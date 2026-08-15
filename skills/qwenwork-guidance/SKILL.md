@@ -1,7 +1,7 @@
 ---
 name: qwenwork-guidance
 description: Routing guide for the built-in QwenWork Connector tools (mcp__qw-builtin__qw_query / mcp__qw-builtin__qw_action). Load ONLY right before calling them to view or manage QwenWork's OWN tasks/sessions or app configuration, or when a qw tool result explicitly asks. Before loading, always check whether another skill or tool can do the job — if so, use that instead. Unless the user explicitly asks, never use it to view skills, plugins, MCP servers, or third-party connectors. Never load in any non-essential scenario (content creation, PPT/docs, coding, research, web tasks), even when the topic is QwenWork itself. If in doubt, do not load.
-level: manual
+level: auto
 native_agent: QwenWorkCN
 description_zh: 内置千问办公 Connector 工具（mcp__qw-builtin__qw_query / mcp__qw-builtin__qw_action）的路由指南。仅在「即将调用这两个工具查看或管理 QwenWork 自身的任务/会话或应用配置」或 qw 工具结果明确要求时才加载。加载前必须先思考能否用其他 skill 或 tool 替代，能替代就不用本技能；除非用户明确要求，否则不通过本技能查看技能、插件、MCP 服务及第三方连接器。其他非必要场景（内容创作、PPT/文档、编码、调研、联网任务）一律不加载，即使主题就是 QwenWork/千问办公本身；拿不准时不要加载。
 version: 1.0.8

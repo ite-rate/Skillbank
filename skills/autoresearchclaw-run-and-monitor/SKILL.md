@@ -1,7 +1,7 @@
 ---
 name: autoresearchclaw-run-and-monitor
 description: Run AutoResearchClaw/ResearchClaw safely, validate config, launch a background research job, and monitor progress when stdout/logs are initially empty.
-level: manual
+level: auto
 native_agent: Hermes
 ---
 

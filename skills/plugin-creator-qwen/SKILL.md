@@ -1,7 +1,7 @@
 ---
 name: plugin-creator-qwen
 description: Create, customize, or modify QwenWork / QwenWorkCN expert plugins. Use when the user wants to create a new plugin, customize an existing plugin, or edit a plugin's skills/commands.
-level: manual
+level: auto
 native_agent: QwenWorkCN
 description_zh: 创建、定制或修改 QwenWork / QwenWorkCN 专家套件。当用户想要创建新套件、定制已有套件或编辑套件内的技能/指令时使用。
 version: 1.7.2
