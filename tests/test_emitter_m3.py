@@ -280,3 +280,35 @@ def test_hermes_oversize_one_agent_while_others_sync(tmp_path, agents_cfg, canon
     hermes_em = HermesEmitter()
     result_hermes = hermes_em.deploy(ir, tmp_path / "hermes", hermes_cfg, canon)
     assert result_hermes.method == "skipped"
+
+# --- P0 #4: Codex 截断优先保留触发关键词 ---
+
+def test_codex_truncate_preserves_use_when_trigger(agents_cfg, tmp_path, canon):
+    """长 description 含 "Use when ..." 触发短语, 截断后应保留末段(触发短语所在整句)。"""
+    # 前部 1100 字无意义填充 + Use when 触发句
+    long_desc = "x" * 1100 + ". Use when the user asks to generate a poster."
+    ir = _make_ir(description=long_desc)
+    cfg = agents_cfg.get("Codex")
+    em = CodexEmitter()
+    result = em.deploy(ir, tmp_path / "x", cfg, canon)
+    import re, yaml
+    parts = result.deployed_path.read_bytes().split(b"---\n", 2)
+    fm = yaml.safe_load(parts[1])
+    desc = fm["description"]
+    assert len(desc) <= CODEX_DESC_MAX, "截断后长度应 ≤ 1024"
+    assert "Use when the user asks to generate a poster." in desc, \
+        f"触发短语应保留, got tail: {desc[-80:]!r}"
+
+
+def test_codex_truncate_no_trigger_plain_cut(agents_cfg, tmp_path, canon):
+    """无触发短语时退化为普通末尾截 + ...(保持原行为)。"""
+    long_desc = "纯填充内容没有任何触发关键词。" * 200  # 没触发短语
+    ir = _make_ir(description=long_desc)
+    cfg = agents_cfg.get("Codex")
+    em = CodexEmitter()
+    result = em.deploy(ir, tmp_path / "x2", cfg, canon)
+    import re, yaml
+    parts = result.deployed_path.read_bytes().split(b"---\n", 2)
+    fm = yaml.safe_load(parts[1])
+    assert len(fm["description"]) <= CODEX_DESC_MAX
+    assert fm["description"].endswith("...")

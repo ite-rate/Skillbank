@@ -106,14 +106,18 @@ def _cmd_add(args: argparse.Namespace) -> int:
     src = args.source
     try:
         if src.startswith(("http://", "https://", "git@", "ssh://")):
-            dsts = import_git_url(src, REPO_ROOT, level=args.level, force=args.force)
-            for d in dsts:
+            results = import_git_url(src, REPO_ROOT, level=args.level, force=args.force)
+            for d, warns in results:
                 print(f"[add] 导入 → {d}")
+                for w in warns:
+                    print(f"  ⚠ {w}")
         else:
-            d = import_skill(Path(src).expanduser(), REPO_ROOT,
-                             level=args.level, force=args.force,
-                             machines=_load_configs()[1], machine=args.machine)
+            d, warns = import_skill(Path(src).expanduser(), REPO_ROOT,
+                                   level=args.level, force=args.force,
+                                   machines=_load_configs()[1], machine=args.machine)
             print(f"[add] 导入 → {d}")
+            for w in warns:
+                print(f"  ⚠ {w}")
         print(f"[add] 下一步: skillhub sync 同步到各 Agent")
         return 0
     except ValueError as e:
@@ -130,10 +134,12 @@ def _cmd_import(args: argparse.Namespace) -> int:
         if agent and agent not in agents_cfg.agents:
             print(f"[import] 未知 agent {agent!r}(agents.toml: {sorted(agents_cfg.agents)})")
             return 2
-        d = import_skill(Path(args.path).expanduser(), REPO_ROOT,
-                         level=args.level, agent=agent,
-                         machines=machines, machine=args.machine, force=args.force)
+        d, warns = import_skill(Path(args.path).expanduser(), REPO_ROOT,
+                                level=args.level, agent=agent,
+                                machines=machines, machine=args.machine, force=args.force)
         print(f"[import] → {d}")
+        for w in warns:
+            print(f"  ⚠ {w}")
         print(f"[import] 下一步: skillhub sync 同步到各 Agent")
         return 0
     except ValueError as e:

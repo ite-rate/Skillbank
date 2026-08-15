@@ -52,11 +52,14 @@ def _unsupported_hint(cap: str, target_agent: str, recommendations: Iterable[str
 
 
 def _unknown_hint(cap: str, target_agent: str) -> bytes:
-    """未证实软警告。"""
+    """未证实软警告(措辞柔和, 不让模型中断执行)。
+
+    与 unsupported 硬警告区分:unknown 仅"未证实",不代表不支持;
+    实测过它可能跑得通则继续, 失败再换也不迟。
+    """
     text = (
-        f"> \u2753 能力未证实:此任务可能依赖 `{cap}` 能力, "
-        f"在当前 Agent `{target_agent}` 上未证实支持。"
-        f"若该步骤失败, 请改用其它已证实 Agent。\n\n"
+        f"> \u2753 `{cap}` 在当前 Agent `{target_agent}` 上未被证实(可能支持也可能不支持)。"
+        f"可尝试先用当前 Agent 执行, 不必中止 — 仅在收到能力不可用时再斟酌是否换已证实 Agent。\n\n"
     )
     return text.encode("utf-8")
 

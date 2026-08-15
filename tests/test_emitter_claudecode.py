@@ -200,3 +200,35 @@ def test_claude_known_supported_capability_no_warning(agents_cfg, cap_matrix, tm
     prompt_bytes = inject_prompts(ir, "ClaudeCode", cap_matrix)
     # native_agent=None, web_search=supported -> 前言应为空
     assert prompt_bytes == b"", f"supported 能力不应注入前言, got: {prompt_bytes!r}"
+
+def test_claude_unknown_capability_soft_warning_does_not_block(agents_cfg, cap_matrix):
+    """unknown 能力应注软警告且措辞不怂恿模型放弃执行。"""
+    # web_search 在 Codex 是 unknown, 用 Codex 测(capability matrix 实测)
+    ir = SkillIR(
+        name="demo", description="d", body=b"## task\nsearch\n",
+        requires=["web_search"], native_agent=None,
+    )
+    prompt = b""
+    from skillhub.prompt_inject import inject_prompts
+
+    # Codex.web_search = unknown
+    pb = inject_prompts(ir, "Codex", cap_matrix)
+    assert "\u2753".encode() in pb, "unknown 应有 ❓ 软警告"
+    # 措辞柔和:含"可尝试"/"不必中止"等不放弃执行的关键字
+    assert (b"\xe5\x8f\xaf\xe5\xb0\x9d\xe8\xaf\x95" in pb) or (b"\xe4\xb8\x8d\xe5\xbf\x85" in pb), \
+        f"unknown 措辞应柔和(可尝试/不必中止), got: {pb!r}"
+    # 不含"建议改用"/"缺"等 unsupported 硬警告关键字
+    assert "\u26a0\ufe0f".encode() not in pb, "unknown 不应用硬警告⚠️符号"
+
+
+def test_claude_unsupported_capability_uses_hard_warning(agents_cfg, cap_matrix):
+    """unsupported 仍用 ⚠️ 硬警告 + '建议改用'(与 unknown 区分开)。"""
+    ir = SkillIR(
+        name="demo", description="d", body=b"## task\nimage\n",
+        requires=["image_generation"], native_agent=None,
+    )
+    pb = inject_prompts(ir, "ClaudeCode", cap_matrix)
+    assert "\u26a0\ufe0f".encode() in pb, "unsupported 应用硬警告"
+    assert "\u5efa\u8bae\u6539\u7528".encode() in pb, "'建议改用' 应在硬警告里"
+    # 不应用 unknown 的 ❓ 符号
+    assert "\u2753".encode() not in pb

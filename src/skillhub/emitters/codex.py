@@ -33,14 +33,41 @@ class CodexEmitter(BaseEmitter):
 
     @staticmethod
     def _truncate_description(desc: str, max_chars: int = CODEX_DESC_MAX) -> str:
-        """后缀省略号截断 — 保 Unicode 字符数(非字节数); 不动 description 源, 只截 emitter 产物。"""
+        """优先保留触发关键词的截断策略(P0 #4)。
+
+        长 description 尾段常是触发短语("Use when the user asks for ...");
+        若整末句(最后一句,也无标点界/分隔)能装进 max_chars, 留末句 + 抠前面+ ...。
+        若留着末句超 max_chars, 用普通方式末尾截 + ..., 不装末句。
+        保 Unicode 字符数(非字节数)。
+        """
         if len(desc) <= max_chars:
             return desc
-        # 留 '...' 的位置
-        clip = max_chars - len(ELLIPSIS)
-        if clip <= 0:
-            return ELLIPSIS  # 1024 < 3 极端不可能, 但健壮兜底
-        return desc[:clip] + ELLIPSIS
+        budget = max_chars - len(ELLIPSIS)
+        if budget <= 0:
+            return ELLIPSIS
+
+        # 触发关键短语标记(常见模式, 无限定精确度)
+        triggers = ("use when", "when the user", "use this",
+                    "invoke when", "load when", "trigger when")
+        lower = desc.lower()
+        trigger_pos = max((lower.rfind(t) for t in triggers), default=-1)
+        if trigger_pos == -1:
+            return desc[:budget] + ELLIPSIS
+
+        # 留触发短语所在整句末段(从句首/触发短语起, 到 description 结束)
+        prefix = desc[:trigger_pos]
+        cut = max(prefix.rfind(". "), prefix.rfind("\n"), prefix.rfind("! "), prefix.rfind("? "))
+        tail_start = cut + 1 if cut != -1 else trigger_pos
+        tail = desc[tail_start:].strip(" \t")
+        if len(tail) <= budget:
+            SEP = " ... "   # 5 chars 头尾分界(计入总长)
+            head_budget = budget - len(tail) - len(SEP)
+            if head_budget > 12 and tail_start > 0:
+                head = desc[:head_budget].rstrip(" .,;!?")
+                return f"{head}{SEP}{tail}"
+            # 头装不下就只留尾巴
+            return tail + (ELLIPSIS if len(tail) < len(desc) else "")
+        return desc[:budget] + ELLIPSIS
 
     def transform_frontmatter(self, ir: SkillIR, cfg: AgentConfig) -> dict[str, Any]:
         fm: dict[str, Any] = {

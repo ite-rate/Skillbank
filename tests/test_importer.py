@@ -59,7 +59,7 @@ def test_import_teleagent_cn_to_zh(tmp_path):
 
     repo = home / "repo"
     repo.mkdir()
-    dst = import_skill(src, repo, machines=_machines(home), machine="m1")
+    dst, _warns = import_skill(src, repo, machines=_machines(home), machine="m1")
 
     ir = parse_canonical(dst / "SKILL.md")
     assert ir.name == "canvas-design"
@@ -92,7 +92,7 @@ def test_import_qwen_market_metadata_to_overrides(tmp_path):
 
     repo = home / "repo"
     repo.mkdir()
-    dst = import_skill(src, repo, machines=_machines(home), machine="m1")
+    dst, _warns = import_skill(src, repo, machines=_machines(home), machine="m1")
 
     ir = parse_canonical(dst / "SKILL.md")
     assert ir.native_agent == "QwenWorkCN"
@@ -151,7 +151,48 @@ def test_import_explicit_agent_flag_beats_detection(tmp_path):
                           ["name: x1", "description: x"])
     repo = tmp_path / "repo"
     repo.mkdir()
-    dst = import_skill(src, repo, agent="ClaudeCode",
+    dst, _warns = import_skill(src, repo, agent="ClaudeCode",
                        machines=_machines(tmp_path), machine="m1")
     ir = parse_canonical(dst / "SKILL.md")
     assert ir.native_agent == "ClaudeCode"   # 显式优先
+
+
+# --- P0 #1: scan_body_paths 路径警告 ---
+
+def test_scan_body_paths_absolute_warns():
+    from skillhub.importer import scan_body_paths
+    body = b"## Step\n\nRun /Users/ss/.claude/skills/foo/run.py\n"
+    ws = scan_body_paths(body)
+    assert any("绝对路径" in w for w in ws)
+
+
+def test_scan_body_paths_windows_drive_warns():
+    from skillhub.importer import scan_body_paths
+    body = b"python E:\\anaconda\\python.exe C:\\Users\\x\\r.py\n"
+    ws = scan_body_paths(body)
+    assert any("绝对路径" in w for w in ws)
+
+
+def test_scan_body_paths_cross_dir_warns():
+    from skillhub.importer import scan_body_paths
+    body = "## Step\n\n参考 ../shared/templates.md 的模板\n".encode("utf-8")
+    ws = scan_body_paths(body)
+    assert any("跨 skill 目录" in w for w in ws)
+
+
+def test_scan_body_paths_clean_returns_empty():
+    from skillhub.importer import scan_body_paths
+    body = "## Step\n\nRun scripts/run.py\n用 ./resources/x.png\n".encode("utf-8")
+    assert scan_body_paths(body) == []
+
+
+def test_import_returns_path_warnings(tmp_path):
+    from skillhub.importer import import_skill
+    # 源含绝对路径 body
+    src = tmp_path / "sk"; src.mkdir()
+    (src / "SKILL.md").write_bytes(
+        b"---\nname: x\ndescription: x\n---\n## step\nrun /Users/nope.py\n"
+    )
+    repo = tmp_path / "repo"; repo.mkdir()
+    d, ws = import_skill(src, repo)
+    assert d.exists() and any("绝对路径" in w for w in ws)

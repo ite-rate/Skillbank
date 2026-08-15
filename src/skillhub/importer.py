@@ -38,6 +38,33 @@ __all__ = ["ImportError_", "import_skill", "detect_source_agent", "import_git_ur
 # 导入失败统一抛 ValueError 语义(避免与内置 ImportError 混淆)
 ImportError_ = ValueError
 
+# 跨 skill 目录的相对路径引用(见 "@" 这种通常是 HERMES 跨 skill 的插值)
+_CROSS_DIR_RE = re.compile(r"\.\./[A-Za-z0-9_\-]+/")
+
+
+def scan_body_paths(body: bytes) -> list[str]:
+    """扫 body, 找:
+    - 绝对路径(/Users/ /home/ C:\\ ...)— 跨机迁移必断
+    - ../ 跨 skill 目录的相对引用 — 部署到不同子目录布局后断裂
+    返回人话警告描述列表(空表示没问题)。
+    """
+    try:
+        text = body.decode("utf-8", errors="replace")
+    except Exception:  # noqa: BLE001
+        return []
+    warns: list[str] = []
+    # Unix 绝对路径(空格或行首后跟 /Users/ /home/)或 Windows 盘符(C:\ D:\ E:\ ...)
+    if re.search(r"(?:^|[\s\"'(])(/Users/|/home/|[A-Z]:\\)", text):
+        # 抽样展示(用 .group() 最短匹;只用于诊断)
+        m = re.search(r"((?:/Users/|/home/|/usr/|/opt/|/tmp/|/[a-zA-Z0-9_./-]+|[A-Z]:\\[^\s\n]+))", text)
+        sample = m.group(1) if m else "..."
+        warns.append(f"body 含写死的绝对路径({sample[:80]},跨机迁移必断)")
+    cross = _CROSS_DIR_RE.findall(text)
+    if cross:
+        warns.append(f"body 含跨 skill 目录的相对引用({'../'.join(set(cross))[:60]},"
+                     f"部署到 imported/ 或软链后可能失效)")
+    return warns
+
 # canonical 认识的字段(不进 overrides)
 _CANONICAL_FIELDS = {
     "name", "description", "level", "native_agent", "requires",
@@ -65,8 +92,11 @@ def import_skill(
     machines: Optional[MachinesConfig] = None,
     machine: str = "mac-main",
     force: bool = False,
-) -> Path:
-    """导入一个 skill 目录(须含 SKILL.md)→ skills/<name>/;返回 canonical 目录。"""
+) -> tuple[Path, list[str]]:
+    """导入一个 skill 目录(须含 SKILL.md)→ skills/<name>/。
+
+    返回 (canonical 目录, body 路径警告列表):警告描述人话字符串, [] 表示无。
+    """
     src_dir = Path(src_dir).resolve()
     skill_md = src_dir / "SKILL.md"
     if not skill_md.exists():
@@ -141,11 +171,15 @@ def import_skill(
         ov_file = ov_dir / f"{agent or native or '_unknown'}.toml"
         ov_file.write_text(tomli_w.dumps(leftovers), encoding="utf-8")
 
-    return dst
+    warnings = scan_body_paths(body)
+    return dst, warnings
 
 
-def import_git_url(url: str, repo_root: Path, **kw) -> list[Path]:
-    """git clone --depth 1 到临时目录, 导入其中所有含 SKILL.md 的 skill 目录。"""
+def import_git_url(url: str, repo_root: Path, **kw) -> list[tuple[Path, list[str]]]:
+    """git clone --depth 1 到临时目录, 导入其中所有含 SKILL.md 的 skill 目录。
+
+    返回 [(canon_dir, warnings), ...]。
+    """
     with tempfile.TemporaryDirectory(prefix="skillhub-add-") as td:
         tmp = Path(td) / "src"
         r = subprocess.run(
@@ -154,11 +188,10 @@ def import_git_url(url: str, repo_root: Path, **kw) -> list[Path]:
         )
         if r.returncode != 0:
             raise ImportError_(f"git clone 失败: {r.stderr.strip()[:300]}")
-        # 根目录本身是 skill?
         cands = []
         if (tmp / "SKILL.md").exists():
             cands.append(tmp)
-        else:  # 仓库是 skills 集合: 每个含 SKILL.md 的一级子目录
+        else:
             cands = sorted(p.parent for p in tmp.glob("*/SKILL.md"))
         if not cands:
             raise ImportError_(f"{url} 里没找到任何 SKILL.md")

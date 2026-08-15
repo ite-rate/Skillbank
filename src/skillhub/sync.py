@@ -242,6 +242,13 @@ def execute(
             print(f"  ~ {name} → {agent}: DEFERRED({result.note})")
             continue
 
+        # P0#3: kimi 不支持 frontmatter 禁止触发字段, manual/experimental disable 在 kimi 失效
+        if agent == "kimi-code" and ir.level in (Level.MANUAL, Level.EXPERIMENTAL):
+            print(f"  ⚠ {name} → kimi-code: level={ir.level.value} 但 kimi 无禁自动触发字段, "
+                  f"该 Agent 端可能仍自动触发(请靠 description 话术或下级工具显式控制)")
+        elif agent == "kimi-code" and ir.level == Level.DISABLE:
+            pass  # disable 不该到这 deploy 段(collect 已过滤)
+
         rec = DeployRecord(
             skill=name, machine=machine, agent=agent,
             deploy_path=str(result.deployed_path), method=result.method,
