@@ -28,10 +28,10 @@ from typing import Optional
 
 import yaml
 
-from skillhub.emitters.canonical import emit_canonical
-from skillhub.ir import Level, SkillIR
-from skillhub.machines import MachinesConfig
-from skillhub.parsers.canonical import FRONTMATTER_RE
+from skillbank.emitters.canonical import emit_canonical
+from skillbank.ir import Level, SkillIR
+from skillbank.machines import MachinesConfig
+from skillbank.parsers.canonical import FRONTMATTER_RE
 
 __all__ = ["ImportError_", "import_skill", "detect_source_agent", "import_git_url"]
 
@@ -180,7 +180,7 @@ def import_git_url(url: str, repo_root: Path, **kw) -> list[tuple[Path, list[str
 
     返回 [(canon_dir, warnings), ...]。
     """
-    with tempfile.TemporaryDirectory(prefix="skillhub-add-") as td:
+    with tempfile.TemporaryDirectory(prefix="skillbank-add-") as td:
         tmp = Path(td) / "src"
         r = subprocess.run(
             ["git", "clone", "--depth", "1", url, str(tmp)],

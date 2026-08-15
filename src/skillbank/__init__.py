@@ -1,4 +1,4 @@
-"""Skill-Hub: central skill repository syncing canonical SKILL.md to 7 AI agents.
+"""Skillbank: central skill repository syncing canonical SKILL.md to 7 AI agents.
 
 pipeline:
     canonical SKILL.md (skills/<name>/SKILL.md)

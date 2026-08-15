@@ -14,11 +14,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from skillhub.agents import AgentsConfig
-from skillhub.capabilities import CapabilityMatrix
-from skillhub.emitters.claudecode import ClaudeCodeEmitter
-from skillhub.ir import Level, SkillIR
-from skillhub.prompt_inject import inject_prompts
+from skillbank.agents import AgentsConfig
+from skillbank.capabilities import CapabilityMatrix
+from skillbank.emitters.claudecode import ClaudeCodeEmitter
+from skillbank.ir import Level, SkillIR
+from skillbank.prompt_inject import inject_prompts
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -209,7 +209,7 @@ def test_claude_unknown_capability_soft_warning_does_not_block(agents_cfg, cap_m
         requires=["web_search"], native_agent=None,
     )
     prompt = b""
-    from skillhub.prompt_inject import inject_prompts
+    from skillbank.prompt_inject import inject_prompts
 
     # Codex.web_search = unknown
     pb = inject_prompts(ir, "Codex", cap_matrix)

@@ -18,12 +18,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from skillhub.agents import AgentsConfig
-from skillhub.emitters.codex import CodexEmitter, CODEX_DESC_MAX
-from skillhub.emitters.hermes import HermesEmitter, HERMES_FILE_MAX
-from skillhub.emitters.qwenworkcn import QwenWorkCNEmitter
-from skillhub.emitters.teleagent import TeleAgentEmitter
-from skillhub.ir import Level, SkillIR
+from skillbank.agents import AgentsConfig
+from skillbank.emitters.codex import CodexEmitter, CODEX_DESC_MAX
+from skillbank.emitters.hermes import HermesEmitter, HERMES_FILE_MAX
+from skillbank.emitters.qwenworkcn import QwenWorkCNEmitter
+from skillbank.emitters.teleagent import TeleAgentEmitter
+from skillbank.ir import Level, SkillIR
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 

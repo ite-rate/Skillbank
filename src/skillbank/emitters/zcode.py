@@ -2,17 +2,17 @@
 
 现状:~/.zcode/skills 是混合体——既有 symlink 到 claude/codex 的(本来就工作),
 又有 archify/atelier/forge 等真实副本(冗余, claude/codex 都有同名版)。
-Skill-Hub 时代:ZCode 全部改为软链跟随 SkillHub canonical。
+Skillbank 时代:ZCode 全部改为软链跟随 Skillbank canonical。
 
 决策层级:
 - emitter 对"本轮要部署到 ZCode 的 skill" -> target 是 ~/.zcode/skills/<name> 软链
-    指向 SkillHub canonical skill 目录(<root>/skills/<name>/)
+    指向 Skillbank canonical skill 目录(<root>/skills/<name>/)
 - 既有真实副本(archify/atelier 等 20+ 个)不主动删 —— 破坏性操作必须用户确认
-    skillhub zcode-cleanup 子命令提供交互确认 + mv 备份到 ~/.zcode/skills.bak/<timestamp>/<name>/
+    skillbank zcode-cleanup 子命令提供交互确认 + mv 备份到 ~/.zcode/skills.bak/<timestamp>/<name>/
     然后再 ln -s(可回滚; 用户决定清几个)
 - 既有的 ogora/brainstorming/dbs 等已软链工作良好的不动(M4 不破坏)
 
-零损耗:ZCode 走软链, body bytes 由 SkillHub canonical 直接持有, 软链透传;
+零损耗:ZCode 走软链, body bytes 由 Skillbank canonical 直接持有, 软链透传;
 部署时 SKILL.md 是 canonical 那份的链(SymlinksSkillDir 软链整个 skill 目录)。
 
 frontmatter 重写:ZCode 是 GLM-5.2 coding agent, 与 Claude Code 同 frontmatter 子集;
@@ -41,9 +41,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from skillhub.agents import AgentConfig
-from skillhub.emitters.base import BaseEmitter, EmitterResult
-from skillhub.ir import SkillIR
+from skillbank.agents import AgentConfig
+from skillbank.emitters.base import BaseEmitter, EmitterResult
+from skillbank.ir import SkillIR
 
 __all__ = ["ZCodeEmitter"]
 
@@ -75,28 +75,28 @@ class ZCodeEmitter(BaseEmitter):
         body zero-loss: 软链透传, SKILL.md 字节就是 canonical 那份本尊的字节。
         前言(native_agent/requires) -> 目前 ZCode 走软链, 不重新拼一份带前言的 SKILL.md;
         ZCode 同模型家族, 我们可能希望它也收到原生 Agent 提示但软链模式下前言只能进 canonical 顶层。
-        暂不实施前言到 ZCode 的拼接(若需要, 改成"软链 + 在 SkillHub canonicalSKILLMD 里硬塞前言"),
+        暂不实施前言到 ZCode 的拼接(若需要, 改成"软链 + 在 Skillbank canonicalSKILLMD 里硬塞前言"),
         正文零损耗的硬约束在前言是常规的"非 zero-loss 不可的 canonical 自己"(前言是推断后的 mark)。
         """
         canonical_skill_dir = Path(canonical_skill_dir)
         target_skill_dir = Path(deploy_root) / ir.name
 
-        # 若目标已是软链(指哪无所谓: claude/codex 都没事), unlink 后重链到 SkillHub canonical
-        # 若是真实目录(archify 这类), 不动! 留给 skillhub zcode-cleanup 子命令交互处理
+        # 若目标已是软链(指哪无所谓: claude/codex 都没事), unlink 后重链到 Skillbank canonical
+        # 若是真实目录(archify 这类), 不动! 留给 skillbank zcode-cleanup 子命令交互处理
         if target_skill_dir.is_symlink():
-            # 已是软链, 可能指 claude/codex 的旧版; 改成指 SkillHub canonical(单一来源)
+            # 已是软链, 可能指 claude/codex 的旧版; 改成指 Skillbank canonical(单一来源)
             target_skill_dir.unlink()
             self.symlink_skill_dir(canonical_skill_dir, target_skill_dir)
-            note = "relinked symlink -> SkillHub canonical"
+            note = "relinked symlink -> Skillbank canonical"
         elif not target_skill_dir.exists():
             # 干净目标, 直接软链
             self.symlink_skill_dir(canonical_skill_dir, target_skill_dir)
-            note = "symlinked to SkillHub canonical"
+            note = "symlinked to Skillbank canonical"
         else:
             # 真实目录(archify 等), M4 不破坏; 加 note 让 caller 知道需手工 zcode-cleanup
             # 也不写 SKILL.md(防覆盖真实文件)
             note = ("REAL DIR present (not a symlink); "
-                    "run `skillhub zcode-cleanup` to back up + link to SkillHub canonical")
+                    "run `skillbank zcode-cleanup` to back up + link to Skillbank canonical")
 
         # 软链模式下未写 SKILL.md, 但若已成软链, skill_md path 就是 canonical 那份本尊
         deployed_path = (target_skill_dir / "SKILL.md") if target_skill_dir.exists() else Path("/dev/null")

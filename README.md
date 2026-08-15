@@ -1,4 +1,4 @@
-# Skill-Hub
+# Skillbank
 
 > Central canonical SKILL.md repository → 7 desktop AI agents.
 > **body byte-identical, no loss** — the non-negotiable hard constraint throughout.
@@ -9,18 +9,18 @@
 ## TL;DR — 5 行上手
 
 ```sh
-cd ~/Documents/main_store/temp/SkillHub   # or wherever you cloned
-pip install -e .                           # 一次性, 注册 `skillhub` 命令
-skillhub scan --machine mac-main           # 探测本机 7 Agent 的 skills 目录 → 写 machines.toml
-skillhub import ~/.qwenworkcn/skills/dws   # 反向导入:Agent skill → canonical
-skillhub sync                              # 交互选 skill×Agent → 计划预览 → 确认部署
+cd ~/Documents/main_store/temp/Skillbank   # or wherever you cloned
+pip install -e .                           # 一次性, 注册 `skillbank` 命令
+skillbank scan --machine mac-main           # 探测本机 7 Agent 的 skills 目录 → 写 machines.toml
+skillbank import ~/.qwenworkcn/skills/dws   # 反向导入:Agent skill → canonical
+skillbank sync                              # 交互选 skill×Agent → 计划预览 → 确认部署
 ```
 
 ---
 
 ## 7 目标 Agent(实测真身, 非需求文档想象)
 
-| SkillHub key | 真实产品 | skills_dir (实测 mac-main) | 集成方式 |
+| Skillbank key | 真实产品 | skills_dir (实测 mac-main) | 集成方式 |
 |---|---|---|---|
 | `ClaudeCode`  | Anthropic Claude Code  | `~/.claude/skills` | cp |
 | `ZCode`       | 智谱 ZCode (GLM-5.2) | `~/.zcode/skills` | **ln 软链** |
@@ -85,32 +85,32 @@ sync 输出 ⚠ 提示模型仍可能自动触发,需靠 description 话术或�
 
 ```sh
 # 路径配置(每机器一次)
-skillhub scan                              # 探测 + 交互确认 + 写 machines.toml
-skillhub scan --yes                        # 非交互自动选最优候选
-skillhub doctor [--machine mac-main]       # 配置/路径/manifest/canonical/git 体检
+skillbank scan                              # 探测 + 交互确认 + 写 machines.toml
+skillbank scan --yes                        # 非交互自动选最优候选
+skillbank doctor [--machine mac-main]       # 配置/路径/manifest/canonical/git 体检
 
 # 导入既有 skill 进 canonical
-skillhub import <agent_skill_dir>          # 反向导入(自动探测 native_agent;双语 _cn→_zh)
-skillhub import <dir> --agent ClaudeCode --level manual
-skillhub add <local_path>                  # 同 import 的快捷变种(无 --agent 自动探测)
-skillhub add <git_url>                     # git clone --depth 1 + 批量导入
+skillbank import <agent_skill_dir>          # 反向导入(自动探测 native_agent;双语 _cn→_zh)
+skillbank import <dir> --agent ClaudeCode --level manual
+skillbank add <local_path>                  # 同 import 的快捷变种(无 --agent 自动探测)
+skillbank add <git_url>                     # git clone --depth 1 + 批量导入
 
 # 同步
-skillhub sync                              # 交互选 skill×Agent → 计划 → 确认
-skillhub sync -s <name> -a <agent> --yes   # 非交互单 skill 单 Agent
-skillhub sync -s <name>                    # 单 skill 到该机器全部 Agent
-skillhub sync --dry-run                    # 只看计划不动盘
-skillhub sync --to <machine>               # 不同机器(默认 mac-main)
+skillbank sync                              # 交互选 skill×Agent → 计划 → 确认
+skillbank sync -s <name> -a <agent> --yes   # 非交互单 skill 单 Agent
+skillbank sync -s <name>                    # 单 skill 到该机器全部 Agent
+skillbank sync --dry-run                    # 只看计划不动盘
+skillbank sync --to <machine>               # 不同机器(默认 mac-main)
 
 # 删除 / 状态
-skillhub rm <name>                         # 本机删副本 + 其它机器标 pending(下次 sync 执行)
-skillhub rm <name> --dry-run
-skillhub list                              # 状态表(c=cp ln=l p=pending ·=未部署)
-skillhub list --agent ClaudeCode --level auto
+skillbank rm <name>                         # 本机删副本 + 其它机器标 pending(下次 sync 执行)
+skillbank rm <name> --dry-run
+skillbank list                              # 状态表(c=cp ln=l p=pending ·=未部署)
+skillbank list --agent ClaudeCode --level auto
 
 # ZCode 治理(可选, 谨慎 — zcode 真实副本迁入中央)
-skillhub zcode-cleanup                     # 逐个交互确认 + mv 备份到 ~/.zcode/skills.bak/<ts>/ → 软链 canonical
-skillhub zcode-cleanup --dry-run
+skillbank zcode-cleanup                     # 逐个交互确认 + mv 备份到 ~/.zcode/skills.bak/<ts>/ → 软链 canonical
+skillbank zcode-cleanup --dry-run
 ```
 
 ---
@@ -119,22 +119,22 @@ skillhub zcode-cleanup --dry-run
 
 ```sh
 # 一次性
-git clone <SkillHub_repo_remote> ~/Documents/SkillHub
-cd ~/Documents/SkillHub
+git clone <Skillbank_repo_remote> ~/Documents/Skillbank
+cd ~/Documents/Skillbank
 pip install -e .
 
 # 第二台机器:
-skillhub scan --machine laptop             # 探测这台装的 agent → 写 machines.toml
+skillbank scan --machine laptop             # 探测这台装的 agent → 写 machines.toml
 #   - 没装的 agent 会被探测标 ✗ 不留下配置 → sync 时跳过不报错
 #   - 各机器的 agent 路径独立手填/确认(QwenWorkCN 在 Mac 与笔记本路径不一致也无所谓)
-skillhub sync --to laptop                  # 拉到该机本装的 agent 子集
+skillbank sync --to laptop                  # 拉到该机本装的 agent 子集
 
 # 远程服务器同上, `--machine remote-server`;只装 claude/codex 子集也行
 ```
 
 跨机机制 = **git 仓库本身当跨机消息总线**:
 - Mac 改 canonical + sync → manifest 写记录(谁部署到哪) → git commit/push
-- 笔记本 git pull → `skillhub sync --to laptop` 自动执行 pending_deletion(其它机器标来的删)→ plan 各 Agent 的 deploy
+- 笔记本 git pull → `skillbank sync --to laptop` 自动执行 pending_deletion(其它机器标来的删)→ plan 各 Agent 的 deploy
 - body hash 比对 manifest 的 `ir_hash` 字段可证各机器收到的 body 一字不差
 
 ---
@@ -162,13 +162,13 @@ canonical SKILL.md (skills/<name>/SKILL.md)
 
 ## 删除链(安全边界)
 
-**SkillHub 只动 manifest 记录过的路径**。机制保证:
+**Skillbank 只动 manifest 记录过的路径**。机制保证:
 - Agent 内置 skill / 用户手放 skill → 从未入 manifest → 永不被删
-- 用户 import 进 canonical 的 skill → 之后由 SkillHub 全权管(skillMaster 模式)
+- 用户 import 进 canonical 的 skill → 之后由 Skillbank 全权管(skillMaster 模式)
 - Agent 自建 skill(Hermes curator 自产 / 你 import 之外的)→ 不碰;想纳入跑 `import`
 
 实例: Mac rm → 本机副本删;其它机器记录标 `pending_deletion=true`;
-那台机器下次 `skillhub sync` 时执行删除并清记录。ln 类型只 unlink 软链,
+那台机器下次 `skillbank sync` 时执行删除并清记录。ln 类型只 unlink 软链,
 canonical 目标绝不动。
 
 ---

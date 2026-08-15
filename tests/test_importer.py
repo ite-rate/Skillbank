@@ -17,9 +17,9 @@ import pytest
 import tomllib
 import yaml
 
-from skillhub.importer import detect_source_agent, import_skill
-from skillhub.machines import MachinesConfig
-from skillhub.parsers.canonical import parse_canonical
+from skillbank.importer import detect_source_agent, import_skill
+from skillbank.machines import MachinesConfig
+from skillbank.parsers.canonical import parse_canonical
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -160,34 +160,34 @@ def test_import_explicit_agent_flag_beats_detection(tmp_path):
 # --- P0 #1: scan_body_paths 路径警告 ---
 
 def test_scan_body_paths_absolute_warns():
-    from skillhub.importer import scan_body_paths
+    from skillbank.importer import scan_body_paths
     body = b"## Step\n\nRun /Users/ss/.claude/skills/foo/run.py\n"
     ws = scan_body_paths(body)
     assert any("绝对路径" in w for w in ws)
 
 
 def test_scan_body_paths_windows_drive_warns():
-    from skillhub.importer import scan_body_paths
+    from skillbank.importer import scan_body_paths
     body = b"python E:\\anaconda\\python.exe C:\\Users\\x\\r.py\n"
     ws = scan_body_paths(body)
     assert any("绝对路径" in w for w in ws)
 
 
 def test_scan_body_paths_cross_dir_warns():
-    from skillhub.importer import scan_body_paths
+    from skillbank.importer import scan_body_paths
     body = "## Step\n\n参考 ../shared/templates.md 的模板\n".encode("utf-8")
     ws = scan_body_paths(body)
     assert any("跨 skill 目录" in w for w in ws)
 
 
 def test_scan_body_paths_clean_returns_empty():
-    from skillhub.importer import scan_body_paths
+    from skillbank.importer import scan_body_paths
     body = "## Step\n\nRun scripts/run.py\n用 ./resources/x.png\n".encode("utf-8")
     assert scan_body_paths(body) == []
 
 
 def test_import_returns_path_warnings(tmp_path):
-    from skillhub.importer import import_skill
+    from skillbank.importer import import_skill
     # 源含绝对路径 body
     src = tmp_path / "sk"; src.mkdir()
     (src / "SKILL.md").write_bytes(

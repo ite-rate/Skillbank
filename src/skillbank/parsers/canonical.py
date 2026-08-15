@@ -18,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from skillhub.ir import SkillIR
+from skillbank.ir import SkillIR
 
 __all__ = ["parse_canonical", "FRONTMATTER_RE", "InvalidCanonicalError"]
 

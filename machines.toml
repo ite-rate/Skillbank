@@ -1,4 +1,4 @@
-# Skill-Hub machines.toml — 每机器 × 每 Agent 手填 skills 目录完整绝对路径
+# Skillbank machines.toml — 每机器 × 每 Agent 手填 skills 目录完整绝对路径
 #
 # 决策(2026-08-15, 用户拍板): 显式手填 > home 展开。
 #   理由: 同一 Agent 在不同机器路径可能完全不同(实测 QwenWorkCN 在 Mac 是
@@ -9,7 +9,7 @@
 #   - skills_dir 必须是完整绝对路径(不用 ~, 不做展开)
 #   - 不列某 Agent = 该机器没装该 Agent, sync 时跳过不报错(需求 4.6)
 #   - agents.toml 里的 install_dir 只是文档参考, 代码部署路径唯一真相源是本文件
-#   - 每台机器首次使用前跑 `skillhub doctor` 验证路径存在性
+#   - 每台机器首次使用前跑 `skillbank doctor` 验证路径存在性
 
 [machines.mac-main]
 display_name = "Mac 主力机"

@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from skillhub.manifest import MANIFEST_VERSION, DeployRecord, DeploymentsManifest
+from skillbank.manifest import MANIFEST_VERSION, DeployRecord, DeploymentsManifest
 
 
 def _rec(skill="demo", machine="mac-main", agent="ClaudeCode", deploy_path="",
@@ -117,7 +117,7 @@ def test_delete_local_removes_cp_dir_and_record(tmp_path):
 
 def test_delete_local_unlinks_symlink_not_target(tmp_path):
     """ln 记录(ZCode):删软链本身,链接目标(canonical)必须完好。"""
-    canonical = tmp_path / "SkillHub" / "skills" / "demo"
+    canonical = tmp_path / "Skillbank" / "skills" / "demo"
     canonical.mkdir(parents=True)
     (canonical / "SKILL.md").write_bytes(b"canonical body")
 

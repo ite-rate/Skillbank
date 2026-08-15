@@ -24,8 +24,8 @@ from typing import Optional
 
 import yaml
 
-from skillhub.agents import AgentConfig
-from skillhub.ir import SkillIR
+from skillbank.agents import AgentConfig
+from skillbank.ir import SkillIR
 
 __all__ = ["EmitterResult", "BaseEmitter", "emit_frontmatter_block"]
 

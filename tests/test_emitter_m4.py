@@ -1,8 +1,8 @@
 """M4 — ZCode(软链) + kimi-code(cp) emitter 测试。
 
 ZCode 三态:
-- 干净目标(不存在) -> 软链建到 SkillHub canonical
-- 已是软链(可能指 claude 旧的) -> unlink 后重链到 SkillHub canonical
+- 干净目标(不存在) -> 软链建到 Skillbank canonical
+- 已是软链(可能指 claude 旧的) -> unlink 后重链到 Skillbank canonical
 - 真实目录(archify 类) -> deferred, 不动, 加 note 提示 zcode-cleanup
 ZCode frontmatter transform 与 Claude 同形(name+description+disable-model-invocation)
 
@@ -21,10 +21,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from skillhub.agents import AgentsConfig
-from skillhub.emitters.kimi import KimiEmitter
-from skillhub.emitters.zcode import ZCodeEmitter
-from skillhub.ir import Level, SkillIR
+from skillbank.agents import AgentsConfig
+from skillbank.emitters.kimi import KimiEmitter
+from skillbank.emitters.zcode import ZCodeEmitter
+from skillbank.ir import Level, SkillIR
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -70,7 +70,7 @@ def _split_fm_body(raw: bytes) -> tuple[dict, bytes]:
 
 
 def test_zcode_clean_target_symlinked(agents_cfg, tmp_path, canon):
-    """干净目标(~/.zcode/skills/demo 不存在) -> 软链建到 SkillHub canonical。"""
+    """干净目标(~/.zcode/skills/demo 不存在) -> 软链建到 Skillbank canonical。"""
     ir = _make_ir()
     cfg = agents_cfg.get("ZCode")
     em = ZCodeEmitter()
@@ -85,11 +85,11 @@ def test_zcode_clean_target_symlinked(agents_cfg, tmp_path, canon):
     assert os.readlink(target) == str(canonical.resolve()), \
         f"软链应指向 canonical dir, got {os.readlink(target)}"
     assert result.method == "ln"
-    assert "symlinked to SkillHub canonical" in result.note
+    assert "symlinked to Skillbank canonical" in result.note
 
 
 def test_zcode_existing_symlink_relinked(agents_cfg, tmp_path, canon):
-    """已是软链(可能指 claude 旧版) -> unlink 后重链到 SkillHub canonical(单一来源)。"""
+    """已是软链(可能指 claude 旧版) -> unlink 后重链到 Skillbank canonical(单一来源)。"""
     ir = _make_ir()
     cfg = agents_cfg.get("ZCode")
     em = ZCodeEmitter()
@@ -108,8 +108,8 @@ def test_zcode_existing_symlink_relinked(agents_cfg, tmp_path, canon):
 
     result = em.deploy(ir, deploy_root, cfg, canonical)
     assert target.is_symlink(), "重链后仍应软链"
-    assert os.readlink(target) == str(canonical.resolve()), "软链应已指向 SkillHub canonical"
-    assert result.note == "relinked symlink -> SkillHub canonical"
+    assert os.readlink(target) == str(canonical.resolve()), "软链应已指向 Skillbank canonical"
+    assert result.note == "relinked symlink -> Skillbank canonical"
 
 
 def test_zcode_real_dir_deferred_not_touched(agents_cfg, tmp_path, canon):

@@ -106,10 +106,10 @@ class MachinesConfig:
         注意: 会丢弃手写的行内注释(TODO 之类)—scan 确认过的值本身就是结论。
         """
         lines = [
-            "# Skill-Hub machines.toml — 每机器 × 每 Agent 手填/scan 确认的完整绝对路径",
+            "# Skillbank machines.toml — 每机器 × 每 Agent 手填/scan 确认的完整绝对路径",
             "#",
             "# 规则:",
-            "#   - skills_dir 完整绝对路径(不支持 ~);由 `skillhub scan` 在该机器上",
+            "#   - skills_dir 完整绝对路径(不支持 ~);由 `skillbank scan` 在该机器上",
             "#     自动探测 + 确认后写入, 也可手改",
             "#   - 不列某 Agent = 该机器没装, sync 跳过不报错",
             "#   - agents.toml 的 install_dir 仅为文档参考, 唯一真相源是本文件",

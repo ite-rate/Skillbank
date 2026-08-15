@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from skillhub.agents import AgentsConfig
-from skillhub.machines import MachinesConfig
+from skillbank.agents import AgentsConfig
+from skillbank.machines import MachinesConfig
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 

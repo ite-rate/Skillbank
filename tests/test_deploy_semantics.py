@@ -17,13 +17,13 @@ from pathlib import Path
 
 import yaml
 
-from skillhub.agents import AgentsConfig
-from skillhub.capabilities import CapabilityMatrix
-from skillhub.emitters.canonical import emit_canonical
-from skillhub.ir import Level, SkillIR
-from skillhub.manifest import DeploymentsManifest
-from skillhub.machines import MachinesConfig
-from skillhub.sync import collect, execute
+from skillbank.agents import AgentsConfig
+from skillbank.capabilities import CapabilityMatrix
+from skillbank.emitters.canonical import emit_canonical
+from skillbank.ir import Level, SkillIR
+from skillbank.manifest import DeploymentsManifest
+from skillbank.machines import MachinesConfig
+from skillbank.sync import collect, execute
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 

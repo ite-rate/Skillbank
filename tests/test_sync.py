@@ -19,13 +19,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-from skillhub.agents import AgentsConfig
-from skillhub.capabilities import CapabilityMatrix
-from skillhub.emitters.canonical import emit_canonical
-from skillhub.ir import Level, SkillIR
-from skillhub.manifest import DeploymentsManifest
-from skillhub.machines import MachinesConfig
-from skillhub.sync import collect, execute, show_plan
+from skillbank.agents import AgentsConfig
+from skillbank.capabilities import CapabilityMatrix
+from skillbank.emitters.canonical import emit_canonical
+from skillbank.ir import Level, SkillIR
+from skillbank.manifest import DeploymentsManifest
+from skillbank.machines import MachinesConfig
+from skillbank.sync import collect, execute, show_plan
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -101,7 +101,7 @@ def test_sync_disable_cleans_local_and_pends_remote(tmp_path):
     execute(repo, "m1", collect(repo, "m1", None, None, machines, agents_cfg, manifest),
             machines, agents_cfg, caps, manifest)
     # 模拟 m2 也部署过(m2 有 ClaudeCode)
-    from skillhub.manifest import DeployRecord
+    from skillbank.manifest import DeployRecord
 
     m2_dir = tmp_path / "claude2" / "demo"
     m2_dir.mkdir(parents=True)
@@ -131,7 +131,7 @@ def test_sync_orphan_record_cleaned(tmp_path):
     d = tmp_path / "claude" / "ghost"
     d.mkdir(parents=True)
     (d / "SKILL.md").write_bytes(b"x")
-    from skillhub.manifest import DeployRecord
+    from skillbank.manifest import DeployRecord
 
     manifest.upsert(DeployRecord(skill="ghost", machine="m1", agent="ClaudeCode",
                                  deploy_path=str(d / "SKILL.md"), method="cp"))
@@ -154,7 +154,7 @@ def test_sync_hermes_oversize_skipped_and_stale_cleaned(tmp_path):
     assert manifest.find("big", machine="m1", agent="Hermes") == []
 
     # 伪造一份旧的 Hermes 记录(历史部署过), 再 sync 应清掉
-    from skillhub.manifest import DeployRecord
+    from skillbank.manifest import DeployRecord
 
     stale = tmp_path / "hermes" / "imported" / "big"
     stale.mkdir(parents=True)

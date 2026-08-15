@@ -19,7 +19,7 @@ schema v1:
 }
 
 删除链(决策 5/6):
-1. skillhub rm <name> / skill 改 level=disable:
+1. skillbank rm <name> / skill 改 level=disable:
    - 本机 manifest 记录的 deploy_path -> 直接删(只删 manifest 记录的; 用户手放/内置不碰)
    - 其它机器的记录 -> pending_deletion=true, 那台机器下次 sync 时执行删除并清记录
 2. skill 从 manifest 消失后, canonical 仍保留(disable 时), git 里可恢复

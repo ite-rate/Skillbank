@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-from skillhub.prompt_inject import CapabilityState
+from skillbank.prompt_inject import CapabilityState
 
 __all__ = ["CapabilityMatrix"]
 

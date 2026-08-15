@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from skillhub.ir import SkillIR
+from skillbank.ir import SkillIR
 
 __all__ = ["inject_prompts", "CapabilityState"]
 

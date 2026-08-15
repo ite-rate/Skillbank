@@ -16,8 +16,8 @@ from pathlib import Path
 
 import tomllib
 
-from skillhub.machines import MachinesConfig
-from skillhub.scan import detect_agent, pick_best
+from skillbank.machines import MachinesConfig
+from skillbank.scan import detect_agent, pick_best
 
 
 def _fake_home(tmp_path: Path) -> Path:

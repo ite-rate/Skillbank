@@ -24,14 +24,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from skillhub.agents import AgentsConfig
-from skillhub.capabilities import CapabilityMatrix
-from skillhub.emitters import get_emitter
-from skillhub.ir import Level, SkillIR
-from skillhub.manifest import DeployRecord, DeploymentsManifest
-from skillhub.machines import MachinesConfig
-from skillhub.parsers.canonical import parse_canonical
-from skillhub.prompt_inject import inject_prompts
+from skillbank.agents import AgentsConfig
+from skillbank.capabilities import CapabilityMatrix
+from skillbank.emitters import get_emitter
+from skillbank.ir import Level, SkillIR
+from skillbank.manifest import DeployRecord, DeploymentsManifest
+from skillbank.machines import MachinesConfig
+from skillbank.parsers.canonical import parse_canonical
+from skillbank.prompt_inject import inject_prompts
 
 __all__ = ["PlanItem", "SyncContext", "collect", "show_plan", "execute"]
 

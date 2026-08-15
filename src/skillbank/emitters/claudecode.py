@@ -20,9 +20,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from skillhub.agents import AgentConfig
-from skillhub.emitters.base import BaseEmitter, EmitterResult
-from skillhub.ir import Level, SkillIR
+from skillbank.agents import AgentConfig
+from skillbank.emitters.base import BaseEmitter, EmitterResult
+from skillbank.ir import Level, SkillIR
 
 __all__ = ["ClaudeCodeEmitter"]
 

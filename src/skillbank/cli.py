@@ -1,4 +1,4 @@
-"""SkillHub CLI — subcommand dispatcher.
+"""Skillbank CLI — subcommand dispatcher.
 
 子命令:
     sync           canonical → 该机器 Agents(collect→show→confirm→execute;无 flag 交互选)
@@ -18,18 +18,18 @@ import subprocess
 import sys
 from pathlib import Path
 
-from skillhub.ir import Level
+from skillbank.ir import Level
 
 __all__ = ["main", "build_parser"]
 
-# .../SkillHub/src/skillhub/cli.py -> repo root(parents[0]=skillhub [1]=src [2]=SkillHub)
+# .../Skillbank/src/skillbank/cli.py -> repo root(parents[0]=skillbank [1]=src [2]=Skillbank)
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _load_configs():
-    from skillhub.agents import AgentsConfig
-    from skillhub.capabilities import CapabilityMatrix
-    from skillhub.machines import MachinesConfig
+    from skillbank.agents import AgentsConfig
+    from skillbank.capabilities import CapabilityMatrix
+    from skillbank.machines import MachinesConfig
 
     agents_cfg = AgentsConfig.load(REPO_ROOT / "agents.toml")
     machines = MachinesConfig.load(
@@ -47,8 +47,8 @@ def _is_tty() -> bool:
 
 
 def _cmd_sync(args: argparse.Namespace) -> int:
-    from skillhub.manifest import DeploymentsManifest
-    from skillhub.sync import collect, execute, show_plan
+    from skillbank.manifest import DeploymentsManifest
+    from skillbank.sync import collect, execute, show_plan
 
     agents_cfg, machines, caps = _load_configs()
     machine = args.machine
@@ -62,13 +62,13 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
     # 交互:无 -s/-a 且 tty 且非 --yes → 选 skill × agent
     if not skills_filter and not agents_filter and _is_tty() and not args.yes:
-        from skillhub.interactive import select_many
+        from skillbank.interactive import select_many
 
-        from skillhub.sync import _iter_canonical_skills  # 内部函数, 轻用
+        from skillbank.sync import _iter_canonical_skills  # 内部函数, 轻用
 
         skill_dirs = _iter_canonical_skills(REPO_ROOT)
         if not skill_dirs:
-            print("[sync] skills/ 为空 — 先 skillhub import <某 agent 的 skill 目录>")
+            print("[sync] skills/ 为空 — 先 skillbank import <某 agent 的 skill 目录>")
             return 0
         opts = [f"{p.name} ({(p / 'SKILL.md').exists() and 'ok' or '无SKILL.md'})"
                 for p in skill_dirs]
@@ -87,7 +87,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         print("[sync] dry-run 结束, 未写任何文件")
         return 0
     if not args.yes and _is_tty():
-        from skillhub.interactive import confirm
+        from skillbank.interactive import confirm
 
         if not confirm("执行以上计划?"):
             print("[sync] 已取消")
@@ -101,7 +101,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
 
 def _cmd_add(args: argparse.Namespace) -> int:
-    from skillhub.importer import import_git_url, import_skill
+    from skillbank.importer import import_git_url, import_skill
 
     src = args.source
     try:
@@ -118,7 +118,7 @@ def _cmd_add(args: argparse.Namespace) -> int:
             print(f"[add] 导入 → {d}")
             for w in warns:
                 print(f"  ⚠ {w}")
-        print(f"[add] 下一步: skillhub sync 同步到各 Agent")
+        print(f"[add] 下一步: skillbank sync 同步到各 Agent")
         return 0
     except ValueError as e:
         print(f"[add] ✗ {e}")
@@ -126,7 +126,7 @@ def _cmd_add(args: argparse.Namespace) -> int:
 
 
 def _cmd_import(args: argparse.Namespace) -> int:
-    from skillhub.importer import import_skill
+    from skillbank.importer import import_skill
 
     agents_cfg, machines, _ = _load_configs()
     try:
@@ -140,7 +140,7 @@ def _cmd_import(args: argparse.Namespace) -> int:
         print(f"[import] → {d}")
         for w in warns:
             print(f"  ⚠ {w}")
-        print(f"[import] 下一步: skillhub sync 同步到各 Agent")
+        print(f"[import] 下一步: skillbank sync 同步到各 Agent")
         return 0
     except ValueError as e:
         print(f"[import] ✗ {e}")
@@ -151,7 +151,7 @@ def _cmd_import(args: argparse.Namespace) -> int:
 
 
 def _cmd_rm(args: argparse.Namespace) -> int:
-    from skillhub.manifest import DeploymentsManifest
+    from skillbank.manifest import DeploymentsManifest
 
     manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
     recs = manifest.find(args.name)
@@ -191,8 +191,8 @@ _AGENT_SHORT = {"ClaudeCode": "CC", "ZCode": "ZC", "QwenWorkCN": "QW", "TeleAgen
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
-    from skillhub.manifest import DeploymentsManifest
-    from skillhub.sync import _iter_canonical_skills
+    from skillbank.manifest import DeploymentsManifest
+    from skillbank.sync import _iter_canonical_skills
 
     agents_cfg, machines, _ = _load_configs()
     machine = args.machine
@@ -252,8 +252,8 @@ def _cmd_list(args: argparse.Namespace) -> int:
 
 
 def _cmd_doctor(args: argparse.Namespace) -> int:
-    from skillhub.manifest import DeploymentsManifest
-    from skillhub.sync import _iter_canonical_skills
+    from skillbank.manifest import DeploymentsManifest
+    from skillbank.sync import _iter_canonical_skills
 
     errors: list[str] = []
     warns: list[str] = []
@@ -286,7 +286,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     print(f"  ✓ manifest: {len(manifest.records)} 条记录, {len(manifest.check_consistency())} 项差异")
 
     # 4. canonical skills 可解析 + name 一致
-    from skillhub.parsers.canonical import parse_canonical
+    from skillbank.parsers.canonical import parse_canonical
 
     for d in _iter_canonical_skills(REPO_ROOT):
         try:
@@ -316,7 +316,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def _cmd_scan(args: argparse.Namespace) -> int:
-    from skillhub.scan import detect_agent, pick_best
+    from skillbank.scan import detect_agent, pick_best
 
     agents_cfg, machines, _ = _load_configs()
     machine = args.machine
@@ -407,7 +407,7 @@ def _cmd_zcode_cleanup(args: argparse.Namespace) -> int:
             print(f"    canonical 存在: {canonical}")
             action = "备份+软链"
         else:
-            print(f"    canonical 不存在 — 先跑: skillhub import {e}")
+            print(f"    canonical 不存在 — 先跑: skillbank import {e}")
             action = None
 
         if args.dry_run:
@@ -420,7 +420,7 @@ def _cmd_zcode_cleanup(args: argparse.Namespace) -> int:
         if args.yes or not _is_tty():
             do_it = True
         else:
-            from skillhub.interactive import confirm
+            from skillbank.interactive import confirm
 
             do_it = confirm(f"    {action}: mv → {backup_root / name} 再 ln -s canonical?")
         if not do_it:
@@ -444,7 +444,7 @@ def _cmd_zcode_cleanup(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="skillhub",
+        prog="skillbank",
         description="Central skill repository -> 7 AI agents (body byte-identical, no loss).",
     )
     sub = p.add_subparsers(dest="cmd", required=True, metavar="<command>")

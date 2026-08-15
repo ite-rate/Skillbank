@@ -1,4 +1,4 @@
-# Skill-Hub 后续迭代 TODO
+# Skillbank 后续迭代 TODO
 
 > M0-M7 已完成(14 commit, 102/102 测试全绿)。本文是 M7 之后用户实际使用中预演出来的、需要迭代的项。
 > 排序按优先级(P0 已完, P1 待用户实战暴露后再定, P2 是已知 polish)。
@@ -24,7 +24,7 @@
 - [ ] #11 import 跨 skill 相对引用(`../shared/x`)跨机深 warn(当前浅 warn)
 - [ ] #12 import 后 doctor 报告未识别 frontmatter 字段(已透传到 overrides, 但用户应知情)
 - [ ] #13 交叉 symlink 去重(claude<->zcode<->codex 指同一处时,list 应折叠展示而非 3 行重复)
-- [ ] #14 Hermes `.usage.json` 作为真实使用频率源入 SkillHub `list`(本扫描调研后定方案)
+- [ ] #14 Hermes `.usage.json` 作为真实使用频率源入 Skillbank `list`(本扫描调研后定方案)
 
 ## 长期 consideration(不计入迭代, 留碍)
 

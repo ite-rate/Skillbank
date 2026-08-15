@@ -17,9 +17,9 @@ from __future__ import annotations
 
 import pytest
 
-from skillhub.emitters.canonical import emit_canonical
-from skillhub.ir import Level
-from skillhub.parsers.canonical import parse_canonical
+from skillbank.emitters.canonical import emit_canonical
+from skillbank.ir import Level
+from skillbank.parsers.canonical import parse_canonical
 
 
 def _roundtrip(tmp_path, content_bytes: bytes) -> tuple[bytes, bytes]:
