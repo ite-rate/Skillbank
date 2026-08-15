@@ -66,75 +66,61 @@ def _split_fm_body(raw: bytes) -> tuple[dict, bytes]:
     return yaml.safe_load(m.group("fm")), m.group("body")
 
 
-# --- ZCode 软链三态 ---
+# --- ZCode cp 三态(2026-08-16 从 ln 改 cp) ---
 
 
-def test_zcode_clean_target_symlinked(agents_cfg, tmp_path, canon):
-    """干净目标(~/.zcode/skills/demo 不存在) -> 软链建到 Skillbank canonical。"""
+def test_zcode_clean_target_cp(agents_cfg, tmp_path, canon):
+    """干净目标(~/.zcode/skills/demo 不存在) -> cp 真实文件。"""
     ir = _make_ir()
     cfg = agents_cfg.get("ZCode")
     em = ZCodeEmitter()
 
-    # canonical skill dir(M2 实测时构造一次)
-    canonical = canon
-    deploy_root = tmp_path / "zcode-skills"
-    deploy_root.mkdir()
-    result = em.deploy(ir, deploy_root, cfg, canonical)
-    target = deploy_root / "demo"
-    assert target.is_symlink(), "干净目标应由 symlink 建"
-    assert os.readlink(target) == str(canonical.resolve()), \
-        f"软链应指向 canonical dir, got {os.readlink(target)}"
-    assert result.method == "ln"
-    assert "symlinked to Skillbank canonical" in result.note
+    result = em.deploy(ir, tmp_path / "z", cfg, canon)
+    target = tmp_path / "z" / "demo"
+    assert target.is_dir() and not target.is_symlink(), "干净目标应是真实目录"
+    assert (target / "SKILL.md").exists()
+    assert result.method == "cp"
 
 
-def test_zcode_existing_symlink_relinked(agents_cfg, tmp_path, canon):
-    """已是软链(可能指 claude 旧版) -> unlink 后重链到 Skillbank canonical(单一来源)。"""
+def test_zcode_existing_symlink_replaced_with_cp(agents_cfg, tmp_path, canon):
+    """旧软链 -> unlink 后 cp 真实文件(从 ln 改 cp 的迁移)。"""
     ir = _make_ir()
     cfg = agents_cfg.get("ZCode")
     em = ZCodeEmitter()
 
-    canonical = canon
-    deploy_root = tmp_path / "zcode-skills"
+    deploy_root = tmp_path / "z"
     deploy_root.mkdir()
     target = deploy_root / "demo"
+    # 预置旧软链
+    fake = tmp_path / "old" / "demo"
+    fake.mkdir(parents=True)
+    (fake / "SKILL.md").write_bytes(b"---\nname: demo\ndescription: old\n---\n")
+    target.symlink_to(fake.resolve())
 
-    # 预置一个"指向 claude 的旧软链"
-    fake_claude = tmp_path / "claude-skills" / "demo"
-    fake_claude.mkdir(parents=True)
-    (fake_claude / "SKILL.md").write_bytes(b"---\nname: demo\ndescription: old\n---\n")
-    target.symlink_to(fake_claude.resolve())
-    assert target.is_symlink()
-
-    result = em.deploy(ir, deploy_root, cfg, canonical)
-    assert target.is_symlink(), "重链后仍应软链"
-    assert os.readlink(target) == str(canonical.resolve()), "软链应已指向 Skillbank canonical"
-    assert result.note == "relinked symlink -> Skillbank canonical"
+    result = em.deploy(ir, deploy_root, cfg, canon)
+    assert not target.is_symlink(), "旧软链应被 unlink 后 cp 替代"
+    assert target.is_dir() and (target / "SKILL.md").exists()
+    assert result.method == "cp"
 
 
-def test_zcode_real_dir_deferred_not_touched(agents_cfg, tmp_path, canon):
-    """真实目录(archify 类, 不是软链) -> deferred, 不删不动, 加 note 提 zcode-cleanup。"""
+def test_zcode_real_dir_cp_overwrite(agents_cfg, tmp_path, canon):
+    """真实目录(archify 类) -> cp 覆盖(改 cp 后不再 deferred)。"""
     ir = _make_ir()
     cfg = agents_cfg.get("ZCode")
     em = ZCodeEmitter()
 
-    canonical = canon
-    deploy_root = tmp_path / "zcode-skills"
+    deploy_root = tmp_path / "z"
     deploy_root.mkdir()
     target = deploy_root / "demo"
-    # 预置一个"用户真实目录"(archify 类)
     target.mkdir()
-    (target / "SKILL.md").write_bytes(b"-- ORIGINAL USER FILE --\n")
-    original_inner = (target / "SKILL.md").read_bytes()
+    (target / "SKILL.md").write_bytes(b"-- OLD --\n")
 
-    result = em.deploy(ir, deploy_root, cfg, canonical)
-    assert result.method == "deferred", "真实目录应 deferred, 不软链不写盘"
-    assert "REAL DIR" in result.note and "zcode-cleanup" in result.note
-
-    # 不动用户真实副本
-    assert not target.is_symlink(), "真实目录不应被改成软链"
-    assert (target / "SKILL.md").read_bytes() == original_inner, \
-        "真实目录里的 SKILL.md 必须保持原状, emitter 不可覆盖"
+    result = em.deploy(ir, deploy_root, cfg, canon)
+    assert result.method == "cp"
+    # SKILL.md 应被 canonical 版覆盖
+    raw = (target / "SKILL.md").read_bytes()
+    assert b"-- OLD --" not in raw, "旧 SKILL.md 应被覆盖"
+    assert b"## Step" in raw, "应写入 canonical body"
 
 
 # --- kimi cp ---

@@ -29,7 +29,7 @@ note = "Anthropic Skill 标准本尊; body 透传"
 [agents.ZCode]
 display_name = "ZCode"
 install_dir = "~/.zcode/skills"
-method = "ln"
+method = "cp"
 disable_invoke_field = "disable-model-invocation"
 disable_invoke_value = true
 keep_native_fields = []

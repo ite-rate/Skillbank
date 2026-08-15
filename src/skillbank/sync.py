@@ -145,13 +145,7 @@ def collect(
                 continue
             detail = str(deploy_root / name)
 
-            # ZCode 特判:目标是真实目录 → deferred(emitter 执行时也会判, 计划期先给准确预告)
-            if agent == "ZCode":
-                target = deploy_root / name
-                if target.exists() and not target.is_symlink():
-                    ctx.plan.append(PlanItem("deferred", name, agent,
-                                             f"目标已是真实目录 {target}; 跑 zcode-cleanup 处理"))
-                    continue
+            # ZCode 改 cp 后不再 deferred(2026-08-16), 直接走 deploy
 
             kind = "deploy"
             rec = manifest.find(name, machine=machine, agent=agent)

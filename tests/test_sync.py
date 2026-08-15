@@ -167,28 +167,30 @@ def test_sync_hermes_oversize_skipped_and_stale_cleaned(tmp_path):
     assert manifest.find("big", machine="m1", agent="Hermes") == []
 
 
-def test_sync_zcode_real_dir_deferred_clean_target_ln(tmp_path):
+def test_sync_zcode_cp_overwrite_and_clean_target(tmp_path):
+    """ZCode 改 cp 后: 真实目录被 cp 覆盖, 干净目标 cp 部署。"""
     repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
-    canon = _write_canonical(repo, "demo")
+    _write_canonical(repo, "demo")
 
-    # 目标已是真实目录 → deferred, 不写记录不动盘
+    # 真实目录 → cp 覆盖(不再 deferred)
     real = tmp_path / "zcode" / "demo"
     real.mkdir(parents=True)
     (real / "SKILL.md").write_bytes(b"user real")
     ctx = collect(repo, "m1", ["demo"], ["ZCode"], machines, agents_cfg, manifest)
-    assert any(i.kind == "deferred" for i in ctx.plan)
     execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
-    assert (real / "SKILL.md").read_bytes() == b"user real"
-    assert manifest.find("demo", machine="m1", agent="ZCode") == []
+    assert b"user real" not in (real / "SKILL.md").read_bytes(), "应被 cp 覆盖"
+    rec = manifest.find("demo", machine="m1", agent="ZCode")
+    assert rec and rec[0].method == "cp"
 
-    # 干净目标 → ln
+    # 干净目标 → cp
     real2 = tmp_path / "zcode" / "fresh"
-    canon2 = _write_canonical(repo, "fresh")
+    _write_canonical(repo, "fresh")
     ctx = collect(repo, "m1", ["fresh"], ["ZCode"], machines, agents_cfg, manifest)
     execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
-    assert real2.is_symlink() and real2.resolve() == canon2.resolve()
-    rec = manifest.find("fresh", machine="m1", agent="ZCode")
-    assert rec and rec[0].method == "ln"
+    assert real2.is_dir() and not real2.is_symlink(), "应是真实目录不是软链"
+    assert (real2 / "SKILL.md").exists()
+    rec2 = manifest.find("fresh", machine="m1", agent="ZCode")
+    assert rec2 and rec2[0].method == "cp"
 
 
 def test_sync_agent_not_on_machine_not_planned(tmp_path):

@@ -17,10 +17,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/agora/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:8e0648ad50e061aea5f102e96278ba170e7cccf6a6dd8599fdd4ca080eca6633",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -94,10 +94,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/ai-coding-agent-research/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:fba653af05bb0018edc2c628cee2e04e4812da72802faeb75a15bc9462d78c9e",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -171,10 +171,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/atelier/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:e0c7004a01f8c9e1e819699b45039217bee5960d2c61d04f60f50c88aa0b82bd",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -248,10 +248,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/autoresearchclaw-run-and-monitor/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:73b2cb34b3ab55a89a450df2c60f1bfcc73b31fb5c48b055a8c4513c2df46311",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -325,10 +325,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/bazaar/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:7a5fff9e06124f320c8ee04e5eef793a015bd931350c86b5454976dd25cf898e",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -402,10 +402,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/bilibili-summary/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:5fc9a52bc8e91f061d4fbce9e1f23a2a8ec25bfc9228b4dc87d36c1092c5bf87",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -479,10 +479,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/brainstorming/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:3616a2aa4ae1a67eb0c5411dd673f97b34f7d39fb5ccc7a3fbdf12f0c2fabedc",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -556,10 +556,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/chatroom-austrian/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:d49c9dc975104260f91ef772bcf0d8299f305086df4fe39ddb634b65b735282f",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -633,10 +633,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/clinic/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:4712f328d6df187bf6707bea55a69e8a5c5c726c2be922c1e53ccce2132bf9c4",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -710,10 +710,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/create-skill/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:0cb2fbe444617681f17da081d0d39a861e4786be5d52a680161f6b1293642604",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -787,10 +787,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/daily-agent-briefing/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:8b4969d30f4007f68629fb5634828238abc5f8ad29aa0fc2b8dac2f8b566924d",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -864,10 +864,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/data-report/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:e314a1345faaeebb365569bb718ed450a7002e0febc39cacc129e380cb8111cb",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -941,10 +941,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/deep-research/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:7406de6911ba9e233815fc5c0132978400da9e73b528ee958d60c126c145fa3f",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1018,10 +1018,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/doc-coauthoring/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:59a60537e3a6c2c04adf8ccec2503fb0f8e84fa2c17118ba96946d6cafc97d72",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1095,10 +1095,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/docx-tele/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:f67214960faa99767771009aef11b182d91714847075320191d573cc1dc42fb1",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1172,10 +1172,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/find-skills/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:64298a28d75ade2058ef3f71586ded9c1fd97403b5047a844d388c03a82017c2",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1249,10 +1249,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/forge/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:326236098b6d2393f33bdf7fba315472ca25a6acd557db7313f07bfb31d56cc6",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1326,10 +1326,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/full-output-enforcement/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:1ed55045fd0f7577babb41a849566caafab61137c999f9e2fd01c71cc41ca82d",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1403,10 +1403,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/grill-me/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:1a2ffd5e8b3678be2c9f6601a865fa33858b7a9a204207d783dce36519c1df65",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1480,10 +1480,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/grill-me-tele/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:9311ff7304f7da870aa2d2be5698f1b463e49b0781f15c0899985956bd7e0404",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1623,10 +1623,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/memory-manager/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:ae78df4eebb4058a5941b91c424251807e430146a911b279e53522fe8399e7ff",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1700,10 +1700,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/notebooklm/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:dec4300d3ea1821ce626705114270a6657d71e8aec6024eaca3be441f0ca0d03",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1777,10 +1777,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/openai-docs/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:814ca7d6d4207ff70fa40d933bc54d6edbaef08291d1cfa81b5e765f1a457323",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1854,10 +1854,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/oracle/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:e8ae49c3aebe1f70f8d51c1d9bdd329fed3cda11afb4b8468eb262d52c8761a0",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -1931,10 +1931,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/paddleocr-doc-parsing/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:47bfb6284b0f05a2ab0a1bde0e99e680878020af769725aa04243175da51852a",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2008,10 +2008,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/pdf-qwen/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:2719771b3aeac948565d68c7c48d4420e57b57ab80f735bd47c64725b655e7c2",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2085,10 +2085,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/pdf-tele/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:bca92c66b53d4524ef429f431b79e320a170d83b03adbef45cd57a4c0804437a",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2162,10 +2162,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/plugin-creator-qwen/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:8de9220f28d8454f4f686081bb4af4a07de16ea673dde27f44005fea25898cb3",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2239,10 +2239,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/powerpoint/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:1ac1027cda2b93aea4899a65bbfeb740182a49e40705595e1e896c6ef2a75b89",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2316,10 +2316,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/pptx-tele/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:12Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:62a897f4bd9840b79fea361cc9e0193332f4cc7c743c1d88186157a479004aad",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2393,10 +2393,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/print/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:276605f0767134a79d99cd4a746ab5afafcda1a9ec2062040d593cb305c5a42a",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2470,10 +2470,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/qwenwork-guidance/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:9e6fdfc9518a3e6496aebe7fd6f8772b938beaa445379fc8e5a30f30a4d8da1e",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2547,10 +2547,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/receiving-code-review-hermes/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:a251c6e9277d079a470d4c57a4337116fdbbb9e0f4f849d2a69e480ed5392501",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2624,10 +2624,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/release-orchestrator/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:8df1a4c9fd1919445a6bd68b6a3858a4a01eded0b99df83e237b8aaff0a4aec9",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2701,10 +2701,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/requesting-code-review-hermes/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:ad617f9477638275178473fd215eae8afedac08db12843dc76c96a29398fa088",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2778,10 +2778,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/scheduler/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:42c40724c3d39313fc614024a82e471c5ab1f202bee1bd15e4ff45e1756e840c",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2855,10 +2855,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/skill-creator-tele/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:b1bb954899cead37ee48e9deb24319deca873cc1981c77a9bb3a32567d84f0b0",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -2932,10 +2932,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/systematic-debugging-hermes/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:7501a5fd94966654e0fc2e9ba9ee4684a41d064048497e3e55dcb46fa4193e92",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -3075,10 +3075,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/writing-plans/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:2308422b700a7cec682a4d2da9787af357276d672d642d03f7dc9d46e9cffd85",
-      "note": "relinked symlink -> Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -3152,10 +3152,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/xlsx/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:f509dca1640ec06330451fd0f8439dc7d9a64055acec8821e57caed82161a32e",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
@@ -3229,10 +3229,10 @@
       "machine": "mac-main",
       "agent": "ZCode",
       "deploy_path": "/Users/ss/.zcode/skills/xlsx-tele/SKILL.md",
-      "deployed_at": "2026-08-15T15:54:13Z",
-      "method": "ln",
+      "deployed_at": "",
+      "method": "cp",
       "ir_hash": "sha256:ddacbfccd860706c5d90e19a8bcbf6dd12de8a40b881cf158dd54a7c7b37e743",
-      "note": "symlinked to Skillbank canonical",
+      "note": "",
       "pending_deletion": false
     },
     {
