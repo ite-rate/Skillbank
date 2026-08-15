@@ -1,223 +1,235 @@
-# Skillbank canonical 全量 skill 分类表(166 个)
+# Skillbank canonical 全量 skill 分类表（166 个）
 
-## 学术研究(14 个)
+> Hermes 频率列来自 `.usage.json` 的 `use_count`/`last_used_at`（仅 Hermes 有此数据，其他 Agent 无频率记录）
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+
+## 学术研究（15 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `ai-coding-agent-research` | Hermes | manual | 4x/07-22 | Use when explaining, evaluating, or comparing AI coding agents, termin |
-| `autoresearchclaw-run-and-monitor` | Hermes | manual |  | Run AutoResearchClaw/ResearchClaw safely, validate config, launch a ba |
-| `deep-research` | TeleAgent | manual |  | 深度研究技能：当用户需要"帮我调研"、"全面调查"、"深入研究"、"生成研究报告"、"市场调研"、"行业分析"等综合性研究任务时使用。执行多 |
-| `deli-autoresearch` | ClaudeCode | manual |  | Long-horizon autonomous research framework protocol for running multi- |
-| `job-market-research` | Hermes | manual | 5x/07-27 | Use when comparing career directions or job market demand. |
-| `live-job-market-research` | Hermes | manual | 3x/07-27 | Research current hiring trends from public recruitment sources when ma |
-| `llm-model-release-research` | Hermes | manual | 2x/08-14 | When an AI model released or which provider runs it. |
-| `paper-experiment-design` | ClaudeCode | manual |  | Use when a scientific paper needs empirical support for a claim: hypot |
-| `paper-guardrails` | ClaudeCode | manual |  | Use as a lightweight orchestration layer for multi-step, ambiguous, or |
-| `paper-literature-survey` | ClaudeCode | manual |  | Use when strengthening a scientific paper's literature foundation: hig |
-| `paper-peer-review` | ClaudeCode | manual |  | Use when simulating peer review for a scientific paper: multi-persona |
-| `paper-structure-logic` | ClaudeCode | manual |  | Use when drafting, reorganizing, or repairing a scientific paper's arg |
-| `research-kickoff` | ClaudeCode | manual |  | Use when the user wants to start an open-ended research-paper directio |
-| `research-paper-writing` | ClaudeCode | manual |  | End-to-end research paper writing and revision pipeline for scientific |
+| `ai-coding-agent-research` | Hermes | manual | 4次/07-22 | 评估/对比 AI coding agent 能力与选型 |
+| `autoresearchclaw-run-and-monitor` | Hermes | manual | — | 跑 AutoResearchClaw 自动研究流程, 验证配置和监控 |
+| `deep-research` | TeleAgent | manual | — | 中文深度研究: 调研/全面调查/行业分析/生成研究报告 |
+| `deli-autoresearch` | ClaudeCode | manual | — | 长周期自主研究框架, 跑多步骤开放式调研 |
+| `job-market-research` | Hermes | manual | 5次/07-27 | 对比职业方向/岗位市场需求 |
+| `live-job-market-research` | Hermes | manual | 3次/07-27 | 从公开招聘源实时研究招聘趋势 |
+| `llm-model-release-research` | Hermes | manual | 2次/08-14 | 追踪 AI 模型发布动态, 查哪个厂商出了什么模型 |
+| `paper-experiment-design` | ClaudeCode | manual | — | 为论文设计实验验证方案 |
+| `paper-guardrails` | ClaudeCode | manual | — | 多步骤论文写作的轻量编排层(防跑偏) |
+| `paper-literature-survey` | ClaudeCode | manual | — | 加强论文的文献基础/综述 |
+| `paper-peer-review` | ClaudeCode | manual | — | 模拟同行评审, 多角色审稿给修改意见 |
+| `paper-structure-logic` | ClaudeCode | manual | — | 起草/重组/修复论文结构逻辑 |
+| `pre-submission-reviewer` | ClaudeCode | manual | — | 论文提交前五维审查(逻辑/写作/语法/LaTeX/图表) |
+| `research-kickoff` | ClaudeCode | manual | — | 启动开放式研究论文项目 |
+| `research-paper-writing` | ClaudeCode | manual | — | 端到端论文写作与修订流水线 |
 
-## 文档生成(14 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 文档生成（14 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `chinese-deck-production` | Hermes | manual | 5x/08-12 | Use for Chinese .pptx decks: de-AI text, pptxgenjs, QA. |
-| `data-report` | QwenWorkCN | manual |  | 从表格文件 (.xlsx / .xlsm / .csv / .tsv) 生成自包含 HTML 数据分析报告。 含 KPI 卡片、EChart |
-| `docx` | QwenWorkCN | manual |  | Comprehensive Word (.docx) skill: create, read, edit, and manipulate W |
-| `docx-tele` | TeleAgent | manual |  | Comprehensive document creation, editing, and analysis with support fo |
-| `paddleocr-doc-parsing` | TeleAgent | manual |  | Fallback parsing for complex PDFs that the PDF skill cannot handle, us |
-| `pdf` | Hermes | manual | 1x/08-13 | Create, read, merge, fill, and secure PDF files. |
-| `pdf-qwen` | QwenWorkCN | manual |  | Use this skill whenever the user wants to do anything with PDF files. |
-| `pdf-tele` | TeleAgent | manual |  | Full-spectrum PDF skill: visually polished document generation via tok |
-| `powerpoint` | Hermes | manual | 7x/08-12 | Create, read, edit .pptx decks, slides, notes, templates. |
-| `pptx` | QwenWorkCN | manual |  | Use this skill any time a .pptx file is involved in any way — as input |
-| `pptx-tele` | TeleAgent | manual |  | 支持创建、编辑、读取和整理 PPT 演示文稿，可用于汇报、提案、课件、路演等场景，也能处理模板、版式、备注、批注及页面内容调整，输出格式包括 |
-| `scanned-pdf-ocr` | Hermes | manual | 1x/08-03 | Extract text from scanned/image-based PDFs that have no text layer. Co |
-| `xlsx` | QwenWorkCN | manual |  | Use this skill any time a spreadsheet file is the primary input or out |
-| `xlsx-tele` | TeleAgent | manual |  | Comprehensive spreadsheet creation, editing, and analysis with support |
+| `data-report` | QwenWorkCN | manual | — | 从 Excel/CSV 表格生成自包含 HTML 数据分析报告 |
+| `docx` | QwenWorkCN | manual | — | QwenWorkCN 版 Word 文档创建/读取/编辑 |
+| `docx-tele` | TeleAgent | manual | — | TeleAgent 版文档创建/编辑/分析 |
+| `paddleocr-doc-parsing` | TeleAgent | manual | — | 复杂版式 PDF 的 OCR 兜底解析 |
+| `pdf` | Hermes | manual | 1次/08-13 | Hermes 版 PDF 创建/读取/合并/填表/加密 |
+| `pdf-qwen` | QwenWorkCN | manual | — | QwenWorkCN 版 PDF 全功能处理 |
+| `pdf-tele` | TeleAgent | manual | — | TeleAgent 版 PDF 生成(视觉精修版) |
+| `powerpoint` | Hermes | manual | 7次/08-12 | Hermes 版 PPT 创建/读取/编辑/模板 |
+| `pptx` | QwenWorkCN | manual | — | QwenWorkCN 版 PPT 全功能 |
+| `pptx-tele` | TeleAgent | manual | — | TeleAgent 版中文 PPT(汇报/提案/课件/路演) |
+| `print` | TeleAgent | manual | — | 通用文档打印(PDF/Word/Excel/PPT/图片→真打印机) |
+| `scanned-pdf-ocr` | Hermes | manual | 1次/08-03 | 扫描件/图片型 PDF 的 OCR 文字提取 |
+| `xlsx` | QwenWorkCN | manual | — | QwenWorkCN 版 Excel 全功能 |
+| `xlsx-tele` | TeleAgent | manual | — | TeleAgent 版电子表格创建/编辑/分析 |
 
-## 创意/视觉(26 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 创意/视觉（26 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `baoyu-article-illustrator` | Hermes | manual |  | Article illustrations: type × style × palette consistency. |
-| `baoyu-comic` | Hermes | manual |  | Knowledge comics (知识漫画): educational, biography, tutorial. |
-| `batch-video-generation-workflows` | Hermes | manual | 5x/07-30 | Use when researching batch AI video generation workflows. |
-| `brandkit` |  | manual |  | Premium brand-kit image generation skill for creating high-end brand-g |
-| `canvas-design` | TeleAgent | manual |  | Create beautiful visual art using design philosophy + AI image generat |
-| `design-taste-frontend` |  | manual |  | Anti-slop frontend skill for landing pages, portfolios, and redesigns. |
-| `design-taste-frontend-v1` |  | manual |  | The original v1 taste-skill, preserved for projects depending on its e |
-| `diagram-drawing` | TeleAgent | manual |  | Generate professional diagrams from natural language. Supports 23 diag |
-| `figure-designer` | ClaudeCode | manual |  | Advises on the design of the three core figures in a technical paper: |
-| `frontend-design` | TeleAgent | manual |  | Guidance for distinctive, intentional visual design when building new |
-| `frontend-review` | ZCode | manual |  | Review frontend code for accessibility, risky UI security issues, miss |
-| `go-interview-rapid-project-design` | Hermes | manual |  | Fast-track interview prep by co-designing a minimal Go project in chat |
-| `gpt-taste` |  | manual |  | Elite UX/UI & Advanced GSAP Motion Engineer. Enforces Python-driven tr |
-| `hearth` | ZCode | manual |  | Hearth (火炉边) — Relationships & family deliberation room. Convene Fromm |
-| `high-end-visual-design` |  | manual |  | Teaches the AI to design like a high-end agency. Defines the exact fon |
-| `image-to-code` |  | manual |  | Elite website image-to-code skill for Codex. For visually important we |
-| `imagegen` | Codex | manual |  | Generate or edit raster images when the task benefits from AI-created |
-| `imagegen-frontend-mobile` |  | manual |  | Elite mobile app image-generation skill for creating premium, app-nati |
-| `imagegen-frontend-web` |  | manual |  | Elite frontend image-direction skill for generating premium, conversio |
-| `industrial-brutalist-ui` |  | manual |  | Raw mechanical interfaces fusing Swiss typographic print with military |
-| `infographic` | TeleAgent | manual |  | Generate professional infographics with 21 layout types and 22 visual |
-| `minimalist-ui` |  | manual |  | Clean editorial-style interfaces. Warm monochrome palette, typographic |
-| `pixel-art` | Hermes | manual |  | Pixel art w/ era palettes (NES, Game Boy, PICO-8). |
-| `redesign-existing-projects` |  | manual |  | Upgrades existing websites and apps to premium quality. Audits current |
-| `stitch-design-taste` |  | manual |  | Semantic Design System Skill for Google Stitch. Generates agent-friend |
-| `web-artifacts-builder` | TeleAgent | manual |  | Suite of tools for creating elaborate, multi-component claude.ai HTML |
+| `baoyu-article-illustrator` | Hermes | manual | — | 为文章配插图(类型×风格×配色一致) |
+| `baoyu-comic` | Hermes | manual | — | 知识漫画: 教育/传记/教程类漫画生成 |
+| `batch-video-generation-workflows` | Hermes | manual | 5次/07-30 | 批量 AI 视频生成工作流调研 |
+| `brandkit` |  | manual | — | 高端品牌套件图片生成 |
+| `canvas-design` | TeleAgent | manual | — | 设计哲学驱动 + AI 生图的高品质海报/视觉创作 |
+| `design-taste-frontend` |  | manual | — | 反 slop 前端设计 skill(落地页/作品集/品牌站) |
+| `design-taste-frontend-v1` |  | manual | — | v1 版审美 skill, 旧项目依赖保留 |
+| `diagram-drawing` | TeleAgent | manual | — | 自然语言生成专业图表(流程图/架构图/时序图等) |
+| `figure-designer` | ClaudeCode | manual | — | 技术论文三张核心图表设计指导 |
+| `frontend-design` | TeleAgent | manual | — | 前端视觉设计指导(差异化/有意图) |
+| `frontend-review` | ZCode | manual | — | 前端代码审查: 可访问性/安全/性能 |
+| `go-interview-rapid-project-design` | Hermes | manual | — | 面试速成: 共设计一个最小 Go 项目 |
+| `gpt-taste` |  | manual | — | GPT 审美 UX/UI + GSAP 动效工程 |
+| `hearth` | ZCode | manual | — | 火炉边房间 — 关系与家庭议题讨论 |
+| `high-end-visual-design` |  | manual | — | 高端代理商级视觉设计教学 |
+| `image-to-code` |  | manual | — | 网站截图转代码(视觉精准还原) |
+| `imagegen` | Codex | manual | — | AI 光栅图片生成/编辑(Codex 内置) |
+| `imagegen-frontend-mobile` |  | manual | — | 移动端 App 高品质配图生成 |
+| `imagegen-frontend-web` |  | manual | — | 前端网页高品质配图生成 |
+| `industrial-brutalist-ui` |  | manual | — | 工业粗野主义 UI(瑞士印刷+机械感) |
+| `infographic` | TeleAgent | manual | — | 21 种版式的专业信息图生成 |
+| `minimalist-ui` |  | manual | — | 极简编辑风格 UI(暖色单色) |
+| `pixel-art` | Hermes | manual | — | 像素画(NES/Game Boy/PICO-8 调色板) |
+| `redesign-existing-projects` |  | manual | — | 升级现有网站/App 到高端品质 |
+| `stitch-design-taste` |  | manual | — | Google Stitch 语义设计系统生成 |
+| `web-artifacts-builder` | TeleAgent | manual | — | 复杂多组件 Claude web artifact 构建 |
 
-## 开发工程(26 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 开发工程（31 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `archify` | ZCode | manual |  | Create polished, validated architecture, workflow, sequence, data-flow |
-| `debugging-hermes-tui-commands` | Hermes | manual |  | Debug Hermes TUI slash commands: Python, gateway, Ink UI. |
-| `dispatching-parallel-agents` |  | manual |  | Use when facing 2+ independent tasks that can be worked on without sha |
-| `executing-plans` |  | manual |  | Use when you have a written implementation plan to execute in a separa |
-| `finishing-a-development-branch` |  | manual |  | Use when implementation is complete, all tests pass, and you need to d |
-| `github-issue-to-pr` | Hermes | manual |  | Carry a GitHub issue to a verified PR with honest CI state. |
-| `github-repo-management` | Hermes | manual | 1x/06-22 | Clone/create/fork repos; manage remotes, releases. |
-| `kanban-codex-lane` | Hermes | manual |  | Use when a Hermes Kanban worker wants to run Codex CLI as an isolated |
-| `merge-reconciler` | Hermes | manual |  | Neutral third-party resolution of agent merge conflicts. |
-| `plan` | Hermes | manual |  | Write a markdown plan to .hermes/plans/; no execution. |
-| `plugin-creator` | Codex | manual |  | Create and scaffold plugin directories for Codex with a required `.cod |
-| `plugin-creator-qwen` | QwenWorkCN | manual |  | Create, customize, or modify QwenWork / QwenWorkCN expert plugins. Use |
-| `receiving-code-review-hermes` | Hermes | manual |  | Use when receiving code review feedback, before implementing suggestio |
-| `release-orchestrator` | ZCode | manual |  | Coordinate software release preparation, rollout readiness, migration |
-| `requesting-code-review-hermes` | Hermes | manual |  | Pre-commit review: security scan, quality gates, auto-fix. |
-| `skill-creator` | Codex | manual |  | Guide for creating effective skills. This skill should be used when us |
-| `skill-creator-tele` | TeleAgent | manual |  | Guide for creating effective skills. This skill should be used when us |
-| `skill-installer` | Codex | manual |  | Install Codex skills into $CODEX_HOME/skills from a curated list or a |
-| `subagent-driven-development` |  | manual |  | Use when executing implementation plans with independent tasks in the |
-| `systematic-debugging-hermes` | Hermes | manual |  | 4-phase root cause debugging: understand bugs before fixing. |
-| `test-driven-development` |  | manual |  | Use when implementing any feature or bugfix, before writing implementa |
-| `using-git-worktrees` |  | manual |  | Use when starting feature work that needs isolation from current works |
-| `using-superpowers` |  | manual | 4x/06-29 | Use when starting any conversation - establishes how to find and use s |
-| `weekly-review-planning` | Hermes | manual |  | Weekly reset: commitments, stalled work, next-week plan. |
-| `writing-plans` |  | manual |  | Use when you have a spec or requirements for a multi-step task, before |
-| `writing-skills` |  | manual | 8x/08-10 | Use when creating new skills, editing existing skills, or verifying sk |
+| `archify` | ZCode | manual | — | 架构图/工作流图/时序图生成(精修版) |
+| `debugging-hermes-tui-commands` | Hermes | manual | — | 调试 Hermes TUI 斜杠命令 |
+| `dispatching-parallel-agents` |  | manual | — | 2+ 独立任务时分派并行 agent |
+| `executing-plans` |  | manual | — | 按已写好的实施计划执行 |
+| `finishing-a-development-branch` |  | manual | — | 开发分支完工后收尾(测试/合并/清理) |
+| `github-issue-to-pr` | Hermes | manual | — | GitHub issue 转 verified PR |
+| `github-repo-management` | Hermes | manual | 1次/06-22 | Git 仓库 clone/create/fork/release 管理 |
+| `kanban-codex-lane` | Hermes | manual | — | Hermes Kanban worker 调 Codex CLI 跑任务 |
+| `merge-reconciler` | Hermes | manual | — | agent 合并冲突的中立第三方裁决 |
+| `plan` | Hermes | manual | — | 写 markdown 计划到 .hermes/plans/(不执行) |
+| `plugin-creator` | Codex | manual | — | Codex 插件目录脚手架创建 |
+| `plugin-creator-qwen` | QwenWorkCN | manual | — | QwenWorkCN 插件创建/定制/修改 |
+| `receiving-code-review-hermes` | Hermes | manual | — | 收到 code review 反馈后的处理流程 |
+| `release-orchestrator` | ZCode | manual | — | 软件发布编排(准备/灰度/就绪检查) |
+| `requesting-code-review-hermes` | Hermes | manual | — | 提交前 review: 安全扫描/质量门/自动修 |
+| `sdlc-review` | Hermes | manual | — | 审查 Kanban 交接和路由验证产出 |
+| `session-action` | TeleAgent | manual | — | 查询其他会话运行状态, 疏通阻塞的待处理任务/权限确认 |
+| `session-librarian` | Hermes | manual | — | 按 prompt 组织会话: 查找/重命名/归档/清理 |
+| `session-mqtt-architecture-storytelling` | Hermes | manual | 2次/05-28 | HTTP+MQTT 系统的会话级面试笔记构建(主题设计/dispatcher/worker) |
+| `skill-creator` | Codex | manual | — | Codex skill 创建指南 |
+| `skill-creator-tele` | TeleAgent | manual | — | TeleAgent skill 创建指南 |
+| `skill-installer` | Codex | manual | — | 从 curated 列表安装 Codex skill |
+| `subagent-driven-development` |  | manual | — | 用独立子 agent 执行实施计划 |
+| `systematic-debugging-hermes` | Hermes | manual | — | 4 阶段根因调试: 先理解再修 |
+| `test-driven-development` |  | manual | — | TDD: 先写测试再实现功能/修 bug |
+| `using-git-worktrees` |  | manual | — | 用 git worktree 隔离 feature 开发 |
+| `using-superpowers` |  | manual | 4次/06-29 | 对话开始时建立 skill 发现与调用机制 |
+| `verification-before-completion` |  | manual | 1次/06-11 | 声称完工前必须跑验证命令确认输出(防假报完成) |
+| `weekly-review-planning` | Hermes | manual | — | 周复盘: 承诺/停滞项/下周计划 |
+| `writing-plans` |  | manual | — | 有 spec/需求时写多步骤实施计划 |
+| `writing-skills` |  | manual | 8次/08-10 | 创建/编辑/验证 skill 的指南 |
 
-## 办公/集成(19 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 办公/集成（25 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `ai-news-digest` | Hermes | manual | 3x/08-13 | Search and curate the latest AI-related news from the internet within |
-| `bilibili-summary` | QwenWorkCN | manual |  | 当用户发送B站(bilibili.com)视频链接并要求"总结视频内容"、"帮我总结"、"总结一下这个视频/课程"时触发。生成美观的HTML |
-| `blocked-page-recovery` | Hermes | manual |  | Recover blocked/paywalled/WAF'd pages via fallbacks. |
-| `box` | Hermes | manual |  | Box manages cloud files, sharing, search, and metadata. |
-| `competitor-news-monitor` | Hermes | manual |  | Watch named companies for material news; cited digests. |
-| `document-to-action-items` | Hermes | manual |  | Extract cited obligations, deadlines, tasks from documents. |
-| `dws` | QwenWorkCN | manual |  | 管理钉钉产品能力(AI表格/AI搜问/日历/通讯录/群聊与机器人/待办/审批/考勤/日志/DING消息/开放平台文档/钉钉文档/钉钉云盘/原 |
-| `email-inbox-triage` | Hermes | manual |  | Triage an inbox: prioritize threads, draft replies safely. |
-| `feishu-sheets-api` | Hermes | manual | 2x/06-20 | Create and populate Feishu Sheets directly via Open Feishu APIs using |
-| `find-nearby` | Hermes | manual |  | Find nearby places (restaurants, cafes, bars, pharmacies, etc.) using |
-| `grounded-citations` | Hermes | manual |  | Ground answers and documents in cited, verifiable sources. |
-| `linear` | Hermes | manual |  | Linear: manage issues, projects, teams via GraphQL + curl. |
-| `meeting-action-items` | Hermes | manual |  | Turn meeting notes into cited decisions, owners, tickets. |
-| `memory-manager` | TeleAgent | manual |  | 长期记忆管理。当用户希望「记住」某事实（长期偏好、身份、习惯）、或需要查询/回顾过往记录时使用。当前长期记忆分为两份：USER.md（用户指 |
-| `news-aggregator-skill` | TeleAgent | manual |  | Comprehensive news aggregator that fetches, filters, and deeply analyz |
-| `obsidian-interactive-learning-seminar` | Hermes | manual | 21x/06-06 | Guide a user through an Obsidian-based interactive learning vault by e |
-| `onboarding` | TeleAgent | manual |  | 用于新用户初次认识引导。当且仅当以下场景触发（优先级高于其他 skill）：用户消息包含「初次见面」「配合起来更默契」「@新用户引导」「@使 |
-| `webhook-subscriptions` | Hermes | manual | 1x/08-13 | Webhook subscriptions: event-driven agent runs. |
-| `xitter` | Hermes | manual |  | Interact with X/Twitter via the x-cli terminal client using official X |
+| `bilibili-summary` | QwenWorkCN | manual | — | B 站视频链接总结内容/课程 |
+| `blocked-page-recovery` | Hermes | manual | — | 被墙/付费墙/WAF 拦截页面兜底恢复 |
+| `box` | Hermes | manual | — | Box 云文件管理(分享/搜索/元数据) |
+| `competitor-news-monitor` | Hermes | manual | — | 监控指定公司重大新闻(带引用) |
+| `contract-review` | TeleAgent | manual | — | 合同审查, 注释式标注问题 |
+| `doc-coauthoring` | TeleAgent | manual | — | 结构化文档协作撰写工作流 |
+| `document-to-action-items` | Hermes | manual | — | 文档提取义务/截止日/任务 |
+| `dws` | QwenWorkCN | manual | — | 钉钉全产品操作(表格/日历/通讯录/群聊/待办/审批/考勤/日志/文档/云盘等) |
+| `email-inbox-triage` | Hermes | manual | — | 收件箱分类: 优先级排序+草拟回复 |
+| `feishu-sheets-api` | Hermes | manual | 2次/06-20 | 飞书表格 API 直接创建/填充数据 |
+| `find-nearby` | Hermes | manual | — | 找附近地点(餐厅/咖啡/药店等) |
+| `grounded-citations` | Hermes | manual | — | 答案/文档加可验证引用来源 |
+| `linear` | Hermes | manual | — | Linear 项目管理 via GraphQL |
+| `meeting-action-items` | Hermes | manual | — | 会议纪要转决策/负责人/工单 |
+| `memory-manager` | TeleAgent | manual | — | 长期记忆管理: 记住事实/查询过往记录 |
+| `news-aggregator-skill` | TeleAgent | manual | — | 新闻聚合: 抓取/过滤/深度摘要 |
+| `obsidian-interactive-learning-seminar` | Hermes | manual | 21次/06-06 | Obsidian 交互式学习研讨引导 |
+| `onboarding` | TeleAgent | manual | — | 新用户初次认识引导 |
+| `product-price-monitor` | Hermes | manual | — | 监控商品/机票/列表价格, 达目标价提醒 |
+| `qwenwork-guidance` | QwenWorkCN | manual | — | QwenWork Connector 内置工具路由指南 |
+| `scheduler` | TeleAgent | manual | — | 定时任务管理: 创建/查看/修改/删除/运行(cron+一次性) |
+| `spotify` | Hermes | manual | — | Spotify 播放/搜索/队列/歌单/设备管理 |
+| `webhook-subscriptions` | Hermes | manual | 1次/08-13 | Webhook 事件驱动 agent 运行 |
+| `xitter` | Hermes | manual | — | X/Twitter 终端客户端交互 |
+| `yuanbao` | Hermes | manual | — | 元宝群: @提及用户, 查询信息/成员 |
 
-## 情报/职业(5 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 情报/职业（6 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `career-direction-analysis` | Hermes | manual | 3x/07-27 | Use when a user is exploring switching career directions. |
-| `code-anchored-interview-coaching` | Hermes | manual | 18x/07-28 | Use when coaching programming/system-design/interview learning in live |
-| `daily-agent-briefing` | Hermes | manual | 226x/08-14 | Generate a concise Chinese daily briefing — three formats: (A) section |
-| `go-study-repo-from-codebase` | Hermes | manual | 1x/06-01 | Build a Go-based learning repository from an existing codebase by extr |
-| `resume-tailoring` | Hermes | manual | 7x/07-28 | Use when creating tailored resumes for job applications - researches c |
+| `ai-news-digest` | Hermes | manual | 3次/08-13 | 搜索/策展最新 AI 相关新闻 |
+| `career-direction-analysis` | Hermes | manual | 3次/07-27 | 职业转型方向探索分析 |
+| `code-anchored-interview-coaching` | Hermes | manual | 18次/07-28 | 编程/系统设计面试辅导(代码锚定式) |
+| `daily-agent-briefing` | Hermes | manual | 226次/08-14 | 中文每日简报(AI 案例+GitHub Trending+工具+天气) |
+| `go-study-repo-from-codebase` | Hermes | manual | 1次/06-01 | 从现有代码库构建 Go 学习仓库 |
+| `resume-tailoring` | Hermes | manual | 7次/07-28 | 按岗位定制简历 |
 
-## 思维/讨论(16 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 思维/讨论（14 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `agora` |  | manual |  | Agora — Intelligent router for the full deliberation ecosystem. Analyz |
-| `atelier` | ZCode | manual |  | Atelier (工作坊) — Creative breakthrough deliberation room. Convene Socra |
-| `bazaar` | ZCode | manual |  | Bazaar (集市) — Business & strategy deliberation room. Convene Schumpete |
-| `brainstorming` |  | manual |  | You MUST use this before any creative work - creating features, buildi |
-| `chatroom-austrian` | ClaudeCode | manual |  | 哈耶克 × 米塞斯 × Claude 三人对话。奥派经济学视角的多角色讨论。 触发方式：/chatroom-austrian、/奥派、「奥派 |
-| `clinic` | ZCode | manual |  | Clinic (诊疗室) — Psychological resilience deliberation room. Convene Ski |
-| `contract-review` | TeleAgent | manual |  | Contract review skill that adds comment-based issue annotations withou |
-| `doc-coauthoring` | TeleAgent | manual |  | Guide users through a structured workflow for co-authoring documentati |
-| `forge` | ZCode | manual |  | Forge (锻造坊) — Engineering & architecture deliberation room. Convene Fe |
-| `godmode` | Hermes | manual |  | Jailbreak LLMs: Parseltongue, GODMODE, ULTRAPLINIAN. |
-| `grill-me` |  | manual |  | A relentless interview to sharpen a plan or design. |
-| `grill-me-tele` | TeleAgent | manual |  | Interview the user relentlessly about a plan or design until reaching |
-| `humanizer-hermes` | Hermes | manual |  | Humanize text: strip AI-isms and add real voice. |
-| `ideation` | Hermes | manual |  | Generate project ideas via creative constraints. |
-| `oracle` | ZCode | manual |  | Oracle (神谕所) — Life crossroads deliberation room. Convene Sartre, Aure |
-| `yao-meta-skill` | ClaudeCode | manual |  | Create/improve/evaluate agent skills from workflows, prompts, SOPs, sc |
+| `agora` |  | manual | — | 讨论生态智能路由器: 分析问题→路由到合适房间 |
+| `atelier` | ZCode | manual | — | 工作坊房间 — 创意突破讨论 |
+| `bazaar` | ZCode | manual | — | 集市房间 — 商业与战略讨论 |
+| `brainstorming` |  | manual | — | 创意工作前的必用头脑风暴 |
+| `chatroom-austrian` | ClaudeCode | manual | — | 哈耶克×米塞斯×Claude 三人奥派经济学对话 |
+| `clinic` | ZCode | manual | — | 诊疗室房间 — 心理韧性讨论 |
+| `forge` | ZCode | manual | — | 锻造坊房间 — 工程与架构讨论 |
+| `godmode` | Hermes | manual | — | LLM 越狱: Parseltongue/GODMODE/ULTRAPLINIAN |
+| `grill-me` |  | manual | — | 无情拷问磨利计划/设计 |
+| `grill-me-tele` | TeleAgent | manual | — | TeleAgent 版无情拷问 |
+| `humanizer-hermes` | Hermes | manual | — | 文本去 AI 味, 加真实人声 |
+| `ideation` | Hermes | manual | — | 用创意约束生成项目点子 |
+| `oracle` | ZCode | manual | — | 神谕所房间 — 人生十字路口讨论 |
+| `yao-meta-skill` | ClaudeCode | manual | — | 从工作流/提示词创建/改进/评估 skill |
 
-## 运维/诊断(9 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 运维/诊断（11 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `codex-usage-check` | Hermes | manual | 3x/07-16 | Check local Codex CLI quota/usage by reading session telemetry when no |
-| `hermes-s6-container-supervision` | Hermes | manual |  | Modify, debug, or extend the s6-overlay supervision tree inside the He |
-| `hermes-session-token-accounting` | Hermes | manual | 2x/07-16 | Use when estimating Hermes conversation token usage, costs, rounds, or |
-| `html-architecture-explorer` | Hermes | manual |  | Build a static HTML/CSS/JS repository that explains a codebase or syst |
-| `inspecting-hermes-desktop-dom` | Hermes | manual |  | Read the live Hermes desktop DOM/CSS over CDP. |
-| `maintaining-hermes-agent` | Hermes | manual | 11x/08-11 | Use when troubleshooting, configuring, routing work through, or modify |
-| `mcporter` | Hermes | manual |  | Use the mcporter CLI to list, configure, auth, and call MCP servers/to |
-| `native-mcp` | Hermes | manual | 1x/08-06 | MCP client: connect servers, register tools (stdio/HTTP). |
-| `network-proxy-diagnostics` | Hermes | manual | 11x/08-15 | Diagnose network paths, proxy configurations, and SSH jump connections |
+| `codex-session-forensics` | Hermes | manual | — | 按主题/仓库名追溯 Codex 会话对应的项目路径 |
+| `codex-usage-check` | Hermes | manual | 3次/07-16 | 查 Codex CLI 本地配额/用量 |
+| `hermes-s6-container-supervision` | Hermes | manual | — | s6-overlay 监督树修改/调试 |
+| `hermes-session-token-accounting` | Hermes | manual | 2次/07-16 | 估算 Hermes 会话 token 用量/成本 |
+| `html-architecture-explorer` | Hermes | manual | — | 构建静态 HTML 仓库解释代码库架构 |
+| `inspecting-hermes-desktop-dom` | Hermes | manual | — | 读 Hermes 桌面 DOM/CSS(CDP) |
+| `maintaining-hermes-agent` | Hermes | manual | 11次/08-11 | Hermes 故障排查/配置/路由/维护 |
+| `mcporter` | Hermes | manual | — | mcporter CLI 列出/配置/调用 MCP server |
+| `native-mcp` | Hermes | manual | 1次/08-06 | MCP 客户端: 连接 server/注册工具 |
+| `network-proxy-diagnostics` | Hermes | manual | 11次/08-15 | 网络路径/代理/SSH 跳板诊断 |
+| `openclaw-operations` | Hermes | manual | 6次/06-19 | OpenClaw 安装/网关/消息通道/CLI 状态运维 |
 
-## 设备/生活(3 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 设备/生活（4 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `create-skill` | QwenWorkCN | manual |  | Guides users through creating effective Agent Skills for QwenWork. Use |
-| `find-skills` | QwenWorkCN | manual |  | Do NOT invoke this skill as a routine first step. Do NOT invoke when a |
-| `minecraft-modpack-server` | Hermes | manual |  | Host modded Minecraft servers (CurseForge, Modrinth). |
+| `create-skill` | QwenWorkCN | manual | — | QwenWorkCN skill 创建引导 |
+| `find-skills` | QwenWorkCN | manual | — | QwenWorkCN 查找可用 skill |
+| `minecraft-modpack-server` | Hermes | manual | — | 开 modded Minecraft 服务器 |
+| `pokemon-player` | Hermes | manual | — | 用无头模拟器+内存读取玩宝可梦 |
 
-## Agent元(12 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## Agent 元工具（11 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `claude-code` | Hermes | manual | 1x/06-29 | Delegate coding to Claude Code CLI (features, PRs). |
-| `codex` | Hermes | manual | 1x/06-29 | Delegate coding to OpenAI Codex CLI (features, PRs). |
-| `codex-session-forensics` | Hermes | manual |  | Trace a user-referenced Codex conversation/session back to the underly |
-| `full-output-enforcement` |  | manual |  | Overrides default LLM truncation behavior. Enforces complete code gene |
-| `hermes-agent` | Hermes | manual | 20x/08-15 | Complete guide to using and extending Hermes Agent — CLI usage, setup, |
-| `lathe` | ClaudeCode | manual |  | Generate hands-on technical tutorials for any topic on demand. Use whe |
-| `media-generation` | QwenWorkCN | manual |  | Generate videos or music as asynchronous media artifacts. Use this ski |
-| `notebooklm` | ClaudeCode | manual |  | Complete API for Google NotebookLM - full programmatic access includin |
-| `openai-docs` | Codex | manual |  | Use when the user asks how to build with OpenAI products or APIs, asks |
-| `openclaw-operations` | Hermes | manual | 6x/06-19 | Use when configuring, troubleshooting, or verifying OpenClaw installat |
-| `qw-pages` | QwenWorkCN | manual |  | Publish static or dynamic HTML, websites, and web applications through |
-| `qw-pages-supabase` | QwenWorkCN | manual |  | Prepare Supabase-compatible persistent storage for a dynamic QW Page. |
+| `claude-code` | Hermes | manual | 1次/06-29 | 委托 Claude Code CLI 做编码 |
+| `codex` | Hermes | manual | 1次/06-29 | 委托 Codex CLI 做编码 |
+| `full-output-enforcement` |  | manual | — | 强制 LLM 完整输出不截断 |
+| `hermes-agent` | Hermes | manual | 20次/08-15 | Hermes Agent 完整使用与扩展指南 |
+| `lathe` | ClaudeCode | manual | — | 按需生成任何主题的实操技术教程 |
+| `media-generation` | QwenWorkCN | manual | — | 异步生成视频/音乐(QwenWorkCN) |
+| `notebooklm` | ClaudeCode | manual | — | Google NotebookLM 完整 API 编程访问 |
+| `openai-docs` | Codex | manual | — | 查 OpenAI 产品/API 文档(Codex 内置) |
+| `qw-pages` | QwenWorkCN | manual | — | 发布静态/动态 HTML 网站(QwenWorkCN) |
+| `qw-pages-supabase` | QwenWorkCN | manual | — | 为动态网站准备 Supabase 持久化存储 |
+| `thoughtcode-go` | ZCode | manual | — | Go 源码↔思路码(中文自然语言投影)双向转换 |
 
-## 其他(22 个)
 
-| skill | 原生Agent | level | Hermes频率 | 主要功能(前70字) |
+## 其他（9 个）
+
+| skill | 原生 Agent | level | Hermes 频率 | 功能说明 |
 |---|---|---|---|---|
-| `broken-skill` | ZCode | manual |  | Broken fixture for packager failure testing. |
-| `broken-yaml-skill` | ZCode | manual |  | Broken YAML fixture for packager failure testing. |
-| `creating-learning-audio` | Hermes | manual | 4x/06-11 | Use when creating or reworking spoken study audio, podcast scripts, or |
-| `dbs` | ClaudeCode | manual |  | dontbesilent 商业工具箱主入口。根据你的问题自动路由到最合适的诊断工具。 触发方式：/dbs、/商业、「帮我看看」 Main e |
-| `dbs-action` | ClaudeCode | manual |  | dontbesilent 执行力诊断。用阿德勒心理学框架诊断你「知道该做什么但就是不做」的真正原因。 触发方式：/dbs-action、/a |
-| `dbs-deconstruct` | ClaudeCode | manual |  | dontbesilent 概念拆解。用维特根斯坦 + 奥派经济学的方法，把模糊的商业概念拆到原子级别。 触发方式：/dbs-deconstr |
-| `dbskill-upgrade` | ClaudeCode | manual |  | 升级 dbskill 到最新版本 |
-| `invalid-governance-skill` | ZCode | manual |  | Test fixture for governance validation. |
-| `pokemon-player` | Hermes | manual |  | Play Pokemon via headless emulator + RAM reads. |
-| `pre-submission-reviewer` | ClaudeCode | manual |  | Runs a pre-submission review of a technical paper across five dimensio |
-| `print` | TeleAgent | manual |  | Universal document printing for PDF, Word, Excel, PowerPoint, and imag |
-| `product-price-monitor` | Hermes | manual |  | Watch product, flight, or listing prices; alert on target. |
-| `qwenwork-guidance` | QwenWorkCN | manual |  | Routing guide for the built-in QwenWork Connector tools (mcp__qw-built |
-| `scheduler` | TeleAgent | manual |  | 定时任务管理：创建、查看、修改、删除、运行定时任务。用户提到"每天/每周/定时/提醒/每隔"或"明天下午3点/一次性任务"或"查看所有任务/ |
-| `sdlc-review` | Hermes | manual |  | Review Kanban handoffs and route verified outcomes. |
-| `session-action` | TeleAgent | manual |  | 查询其他会话的运行和介入状态，并基于 session_status 与 session_continue 疏通等待问题回答或权限确认的阻塞任 |
-| `session-librarian` | Hermes | manual |  | Organize sessions by prompt: find, rename, archive, prune. |
-| `session-mqtt-architecture-storytelling` | Hermes | manual | 2x/05-28 | Build and maintain session-centric interview notes for systems that co |
-| `spotify` | Hermes | manual |  | Spotify: play, search, queue, manage playlists and devices. |
-| `thoughtcode-go` | ZCode | manual |  | Use when the user wants to read or write Go source code as 思路码 (though |
-| `verification-before-completion` |  | manual | 1x/06-11 | Use when about to claim work is complete, fixed, or passing, before co |
-| `yuanbao` | Hermes | manual |  | Yuanbao (元宝) groups: @mention users, query info/members. |
-
+| `broken-skill` | ZCode | manual | — | 测试 fixture(损坏 skill 样本, 非生产) |
+| `broken-yaml-skill` | ZCode | manual | — | 测试 fixture(损坏 YAML 样本, 非生产) |
+| `chinese-deck-production` | Hermes | manual | 5次/08-12 | 中文 PPT 制作: 去 AI 味 + pptxgenjs + 质检 |
+| `creating-learning-audio` | Hermes | manual | 4次/06-11 | 创建/重做语音学习音频/播客片段 |
+| `dbs` | ClaudeCode | manual | — | dontbesilent 商业工具箱主入口, 自动路由诊断工具 |
+| `dbs-action` | ClaudeCode | manual | — | dontbesilent 执行力诊断(阿德勒心理学) |
+| `dbs-deconstruct` | ClaudeCode | manual | — | dontbesilent 概念拆解(维特根斯坦+奥派) |
+| `dbskill-upgrade` | ClaudeCode | manual | — | 升级 dbskill 到最新版 |
+| `invalid-governance-skill` | ZCode | manual | — | 测试 fixture(governance 验证样本, 非生产) |
