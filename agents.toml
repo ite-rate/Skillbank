@@ -3,7 +3,8 @@
 #
 # 字段约定:
 #   display_name      - 展示名
-#   install_dir       - skill 子目录落点(相对 home, 由 machines.toml 展开 ~)
+#   install_dir       - 仅文档参考!(部署路径唯一真相源是 machines.toml 手填的 skills_dir;
+#                       同一 Agent 跨机器路径不保证一致, 如 QwenWorkCN, 故不能以此展开)
 #   method            - cp 拷贝整目录 | ln 软链单 SKILL.md 目录指向 canonical
 #   disable_invoke_field / disable_invoke_value
 #                     - level 非 auto 时写到 frontmatter 的字段及值

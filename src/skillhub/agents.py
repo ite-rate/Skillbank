@@ -16,14 +16,18 @@ class AgentConfig:
     """单个 Agent 的集成方式(对应 agents.toml 里 [agents.<name>])。
 
     字段语义见 agents.toml 注释:
-- install_dir (~ 展开) / method (cp|ln) / level 映射
-      / keep_native_fields / lang_duplication / description_max / file_size_max
-      / default_category / skills_dir_config_key / note
+- install_dir (仅文档参考! 部署路径唯一真相源是 machines.toml 的手填 skills_dir)
+      / method (cp|ln) / level 映射 / keep_native_fields / lang_duplication
+      / description_max / file_size_max / default_category / note
+
+    2026-08-15 决策:删除 resolve_install_dir(home 展开)。
+    实测同一 Agent 跨机器路径不保证一致(QwenWorkCN), 显式手填 machines.toml 最稳;
+    此处 install_dir 保留仅为 README 表格/文档参考, 代码不消费。
     """
 
     name: str
     display_name: str
-    install_dir: str            # 相对 home, e.g. "~/.claude/skills"
+    install_dir: str            # 仅文档参考, 部署不用它
     method: str                 # cp | ln
     disable_invoke_field: Optional[str] = None
     disable_invoke_value: object = None
@@ -34,10 +38,6 @@ class AgentConfig:
     default_category: Optional[str] = None
     skills_dir_config_key: Optional[str] = None
     note: str = ""
-
-    def resolve_install_dir(self, home: str) -> Path:
-        """按目标机器 home 把 ~/.xxx 展开成绝对路径。"""
-        return Path(self.install_dir.replace("~", home, 1) if self.install_dir.startswith("~") else self.install_dir)
 
     def needs_disable_invoke(self, level_value: str) -> bool:
         """level == manual/experimental/disable 时, emitter 写出 disable_invoke_field"""

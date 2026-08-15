@@ -1,42 +1,61 @@
-# Skill-Hub machines.toml — 各机器的 home 路径展开配置
+# Skill-Hub machines.toml — 每机器 × 每 Agent 手填 skills 目录完整绝对路径
 #
-# emitter 落盘时按 --to <machine> 取该机器的 home + agents.toml 里的 install_dir
-# (相对 home 展开 ~)。
-# Agent 不在 machines.<m>.agents 列表里的 -> 该机器没装该 Agent,
-# sync 时 skip 不报错(需求 4.6: 某台机器没装某 Agent 时同步脚本不应报错, 跳过即可)。
+# 决策(2026-08-15, 用户拍板): 显式手填 > home 展开。
+#   理由: 同一 Agent 在不同机器路径可能完全不同(实测 QwenWorkCN 在 Mac 是
+#   ~/.qwenworkcn/, 换台机器/换个版本/Windows 就变了), "install_dir + home 拼接"
+#   的隐式假设不成立。每机器每 Agent 显式填完整路径最稳, 配错在 sync 前就能暴露。
 #
-# 三台机器各占位, 路径未填的标 TODO, 实测后补。
+# 规则:
+#   - skills_dir 必须是完整绝对路径(不用 ~, 不做展开)
+#   - 不列某 Agent = 该机器没装该 Agent, sync 时跳过不报错(需求 4.6)
+#   - agents.toml 里的 install_dir 只是文档参考, 代码部署路径唯一真相源是本文件
+#   - 每台机器首次使用前跑 `skillhub doctor` 验证路径存在性
 
 [machines.mac-main]
 display_name = "Mac 主力机"
-home = "/Users/ss"
-agents = [
-    "ClaudeCode",
-    "ZCode",
-    "QwenWorkCN",
-    "TeleAgent",
-    "Hermes",
-    "Codex",
-    "kimi-code",
-]
+
+[machines.mac-main.agents.ClaudeCode]
+skills_dir = "/Users/ss/.claude/skills"
+
+[machines.mac-main.agents.ZCode]
+skills_dir = "/Users/ss/.zcode/skills"
+
+[machines.mac-main.agents.QwenWorkCN]
+skills_dir = "/Users/ss/.qwenworkcn/skills"
+
+[machines.mac-main.agents.TeleAgent]
+skills_dir = "/Users/ss/.config/TeleAgent/skills"
+
+[machines.mac-main.agents.Hermes]
+skills_dir = "/Users/ss/.hermes/skills"
+
+[machines.mac-main.agents.Codex]
+skills_dir = "/Users/ss/.codex/skills"
+
+[machines.mac-main.agents.kimi-code]
+skills_dir = "/Users/ss/.kimi-code/skills"
+
+# ------------------------------------------------------------------
+# 下面两台机器: TODO 占位, 到那台机器上实测真实路径后填。
+# 注意 QwenWorkCN/kimi 这类产品路径不保证跨机器一致, 逐台实测逐台填。
+# ------------------------------------------------------------------
 
 [machines.laptop]
 display_name = "笔记本"
-home = "/Users/ss"   # TODO: 实测后改, 笔记本若是另一台 Mac 同账号可能同 home
-agents = [
-    "ClaudeCode",
-    "ZCode",
-    "QwenWorkCN",
-    "TeleAgent",
-    "Hermes",
-    "Codex",
-    "kimi-code",
-]
+
+[machines.laptop.agents.ClaudeCode]
+skills_dir = "/Users/ss/.claude/skills"   # TODO: 笔记本实测确认(若同账号 Mac 可能一致)
+
+[machines.laptop.agents.ZCode]
+skills_dir = "/Users/ss/.zcode/skills"    # TODO: 笔记本实测确认
+
+# QwenWorkCN: TODO 笔记本实测 — 用户反馈"路径和 Mac 不一样", 必须实测后填, 别照抄 Mac
+# TeleAgent / Hermes / Codex / kimi-code: TODO 同上, 装了才配
 
 [machines.remote-server]
 display_name = "远程服务器"
-home = "/home/xxx"   # TODO: 实测后改
-agents = [
-    "ClaudeCode",
-    # 远程服务器只装 claude/codex 的子集, 实测后补
-]
+
+[machines.remote-server.agents.ClaudeCode]
+skills_dir = "/home/xxx/.claude/skills"   # TODO: 服务器实测 home 与路径
+
+# 远程服务器大概率只有 claude/codex 子集, 实测后补
