@@ -119,3 +119,4 @@ def test_check_body_refs_known_subdirs_collected(tmp_path):
     issues = check_body_refs(body, d)
     assert len(issues) == 9
     assert all(i.severity == "ok" for i in issues)
+

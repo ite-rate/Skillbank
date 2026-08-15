@@ -21,13 +21,24 @@ __all__ = ["resource_stats", "check_body_refs", "BodyRefIssue"]
 # 排除 https:// URL 和 ../ (后者 scan_body_paths 管)
 _REL_REF_RE = re.compile(
     r"""
-    (?:`|\"|'|\()
+    (?:`|\"|'|\(|\$\{?SKILL_DIR\}?(?:/|\b))
     (?!https?://|\.\./)
     (
       (?:scripts|references|resources|templates|prompts|fonts|rooms|agents|protocol)/
       [A-Za-z0-9_./\-]+
       \.
-      (?:json|jpeg|yml|yaml|toml|html|css|csv|ottf|jpeg|jpg|png|tsv|tsx|geojson|js|ts|md|txt|py|sh|ttf)  # noqa: E501 长后缀先于短后缀防 js|ts 抢 json
+      (?:json|jpeg|yml|yaml|toml|html|css|csv|ottf|jpeg|jpg|png|tsv|tsx|geojson|js|ts|md|txt|py|sh|ttf|ttf)  # noqa: E501 长后缀先于短后缀防 js|ts 抢 json
+    )
+    """,
+    re.VERBOSE,
+)
+# 补充: SKILL_DIR 变量引用 "${SKILL_DIR}/scripts/foo.py" 也要识
+_SKILL_DIR_REF_RE = re.compile(
+    r"""
+    \$(?:\{SKILL_DIR\}|SKILL_DIR)[/\\]+
+    (
+      (?:scripts|references|resources|templates|prompts|fonts|rooms|agents|protocol)/
+      [A-Za-z0-9_./\-]+\.(?:json|jpeg|yml|yaml|toml|html|css|csv|ottf|jpg|png|tsv|tsx|js|ts|md|txt|py|sh|ttf)
     )
     """,
     re.VERBOSE,
@@ -95,15 +106,16 @@ def check_body_refs(body: bytes, skill_dir: Path) -> list[BodyRefIssue]:
         return []
     issues: list[BodyRefIssue] = []
     seen_refs: set[str] = set()
-    for m in _REL_REF_RE.finditer(text):
-        ref = m.group(1)
-        if ref in seen_refs:
-            continue
-        seen_refs.add(ref)
-        target = d / ref
-        if target.exists():
-            issues.append(BodyRefIssue("ok", ref, "在镜像目录中存在"))
-        else:
-            issues.append(BodyRefIssue("missing", ref,
-                                       f"在 skill 目录内找不到 {target}"))
+    for rx in (_REL_REF_RE, _SKILL_DIR_REF_RE):
+        for m in rx.finditer(text):
+            ref = m.group(1)
+            if ref in seen_refs:
+                continue
+            seen_refs.add(ref)
+            target = d / ref
+            if target.exists():
+                issues.append(BodyRefIssue("ok", ref, "在镜像目录中存在"))
+            else:
+                issues.append(BodyRefIssue("missing", ref,
+                                           f"在 skill 目录内找不到 {target}"))
     return issues
