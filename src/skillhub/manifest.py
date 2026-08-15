@@ -150,7 +150,8 @@ class DeploymentsManifest:
                     n += 1
         return n
 
-    def delete_local(self, skill: str, machine: str, dry_run: bool = False) -> list[str]:
+    def delete_local(self, skill: str, machine: str, agent: Optional[str] = None,
+                     dry_run: bool = False) -> list[str]:
         """删除链·本机段:删盘上 deploy_path + 清 manifest 记录。
 
         只删 manifest 记录的路径(用户手放/内置 skill 从不入库,天然不碰)。
@@ -160,7 +161,7 @@ class DeploymentsManifest:
         返回删除的动作描述列表。
         """
         actions: list[str] = []
-        recs = self.find(skill, machine=machine)
+        recs = self.find(skill, machine=machine, agent=agent)
         for r in recs:
             target = Path(r.deploy_path)
             # deploy_path 指向 <skill_dir>/SKILL.md(cp 类)或软链的 skill dir(ln 类);

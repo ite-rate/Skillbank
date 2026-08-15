@@ -21,8 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "PyYAML>=6.0",       # SKILL.md frontmatter 是 YAML,parser/emitter 必需
-    "tomli_w>=1.0",      # 写 TOML(读用 Python 3.11+ 内置 tomllib)
-    "questionary>=2.0",  # M6 交互菜单
+    "tomli_w>=1.0",      # importer 写 .agent_overrides/*.toml(读用内置 tomllib)
 ]
 
 [project.optional-dependencies]

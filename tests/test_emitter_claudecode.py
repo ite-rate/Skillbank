@@ -29,6 +29,15 @@ def agents_cfg():
 
 
 @pytest.fixture()
+def canon(tmp_path):
+    """真实存在的 canonical skill 目录(write_resources 全结构镜像需要)。"""
+    d = tmp_path / "canonical" / "demo"
+    d.mkdir(parents=True)
+    (d / "SKILL.md").write_bytes(b"---\nname: demo\ndescription: a skill\nlevel: auto\n---\n## body\n")
+    return d
+
+
+@pytest.fixture()
 def cap_matrix():
     return CapabilityMatrix.load(REPO_ROOT / "capabilities.toml")
 
@@ -53,7 +62,7 @@ def _make_ir(
     )
 
 
-def test_claude_body_identical_after_emit(agents_cfg, tmp_path):
+def test_claude_body_identical_after_emit(agents_cfg, tmp_path, canon):
     """body 字节经过 emitter deploy 后仍与原 IR body 字节等值(前言在外)。"""
     body = b"## Step 1\n\nLine A\nLine B\r\nCRLF preserved\r\n"
     ir = _make_ir(body=body, level=Level.AUTO)
@@ -76,22 +85,22 @@ def test_claude_body_identical_after_emit(agents_cfg, tmp_path):
         f"body 字节必须出现在 deployed 文件末尾且与原 IR 等值\ngot tail: {raw[body_pos:]!r}"
 
 
-def test_claude_crlf_preserved_in_deployed(agents_cfg, tmp_path):
+def test_claude_crlf_preserved_in_deployed(agents_cfg, tmp_path, canon):
     body = b"CRLF\r\nmust not be LF\n"
     ir = _make_ir(body=body)
     cfg = agents_cfg.get("ClaudeCode")
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, tmp_path / "c" / "demo", prompt_bytes=b"")
+    result = em.deploy(ir, tmp_path / "x", cfg, canon, prompt_bytes=b"")
     raw = result.deployed_path.read_bytes()
     assert b"CRLF\r\nmust not be LF\n" in raw, "CRLF body 被 emitter 改成 LF — 零损耗破"
 
 
-def test_claude_auto_level_no_disable_invoke(agents_cfg, tmp_path):
+def test_claude_auto_level_no_disable_invoke(agents_cfg, tmp_path, canon):
     """level=auto -> frontmatter 不写 disable-model-invocation(允许模型自动触发)。"""
     ir = _make_ir(level=Level.AUTO)
     cfg = agents_cfg.get("ClaudeCode")
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, tmp_path / "c" / "demo")
+    result = em.deploy(ir, tmp_path / "x", cfg, canon)
     raw = result.deployed_path.read_bytes()
     parts = raw.split(b"---\n", 2)
     fm = yaml.safe_load(parts[1])
@@ -100,12 +109,12 @@ def test_claude_auto_level_no_disable_invoke(agents_cfg, tmp_path):
     assert "disable-model-invocation" not in fm
 
 
-def test_claude_manual_level_emits_disable_invoke_true(agents_cfg, tmp_path):
+def test_claude_manual_level_emits_disable_invoke_true(agents_cfg, tmp_path, canon):
     """level=manual -> frontmatter 加 disable-model-invocation: true。"""
     ir = _make_ir(level=Level.MANUAL)
     cfg = agents_cfg.get("ClaudeCode")
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, tmp_path / "c" / "demo")
+    result = em.deploy(ir, tmp_path / "x", cfg, canon)
     parts = result.deployed_path.read_bytes().split(b"---\n", 2)
     fm = yaml.safe_load(parts[1])
     assert fm["name"] == "demo"
@@ -113,18 +122,18 @@ def test_claude_manual_level_emits_disable_invoke_true(agents_cfg, tmp_path):
         f"manual 级应映射 disable-model-invocation: true, got fm: {fm}"
 
 
-def test_claude_experimental_level_also_emits_disable_invoke(agents_cfg, tmp_path):
+def test_claude_experimental_level_also_emits_disable_invoke(agents_cfg, tmp_path, canon):
     """level=experimental -> 与 manual 同样禁止自动触发。"""
     ir = _make_ir(level=Level.EXPERIMENTAL)
     cfg = agents_cfg.get("ClaudeCode")
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, tmp_path / "c" / "demo")
+    result = em.deploy(ir, tmp_path / "x", cfg, canon)
     parts = result.deployed_path.read_bytes().split(b"---\n", 2)
     fm = yaml.safe_load(parts[1])
     assert fm["disable-model-invocation"] is True
 
 
-def test_claude_canonical_meta_fields_not_polluting(agents_cfg, tmp_path):
+def test_claude_canonical_meta_fields_not_polluting(agents_cfg, tmp_path, canon):
     """canonical 的 native_agent/requires/description_zh/name_zh/version/license 不写进 Claude frontmatter。"""
     ir = _make_ir(
         native_agent="TeleAgent",
@@ -136,26 +145,26 @@ def test_claude_canonical_meta_fields_not_polluting(agents_cfg, tmp_path):
     ir.license = "MIT"
     cfg = agents_cfg.get("ClaudeCode")
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, tmp_path / "c" / "demo")
+    result = em.deploy(ir, tmp_path / "x", cfg, canon)
     parts = result.deployed_path.read_bytes().split(b"---\n", 2)
     fm = yaml.safe_load(parts[1])
     for forbidden in ("native_agent", "requires", "description_zh", "name_zh", "version", "license", "level"):
         assert forbidden not in fm, f"canonical 元字段 {forbidden!r} 污染 Claude frontmatter"
 
 
-def test_claude_long_description_not_truncated(agents_cfg, tmp_path):
+def test_claude_long_description_not_truncated(agents_cfg, tmp_path, canon):
     """Claude Code 无 description 字符限制; 长描述应原样保留。"""
     long_desc = "A very long description. " * 100  # > 2000 chars
     ir = _make_ir(description=long_desc)
     cfg = agents_cfg.get("ClaudeCode")
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, tmp_path / "c" / "demo")
+    result = em.deploy(ir, tmp_path / "x", cfg, canon)
     parts = result.deployed_path.read_bytes().split(b"---\n", 2)
     fm = yaml.safe_load(parts[1])
     assert fm["description"] == long_desc, "Claude description 被截断 — 不应有长度限制"
 
 
-def test_claude_prompt_injection_with_capabilities(agents_cfg, cap_matrix, tmp_path):
+def test_claude_prompt_injection_with_capabilities(agents_cfg, cap_matrix, tmp_path, canon):
     """requires 中 unsupported 能力 + native_agent 前言应当拼在 body 前。
 
     用真实 capabilities.toml 矩阵: ClaudeCode 的 image_generation = unsupported,
@@ -177,14 +186,14 @@ def test_claude_prompt_injection_with_capabilities(agents_cfg, cap_matrix, tmp_p
 
     # 通过 emitter deploy 写出来, body 在前言之后仍字节等值
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, tmp_path / "c" / "demo", prompt_bytes=prompt_bytes)
+    result = em.deploy(ir, tmp_path / "x", cfg, canon, prompt_bytes=prompt_bytes)
     raw = result.deployed_path.read_bytes()
     # body 必须完整出现在文件末尾(前言拼前)
     body_pos = raw.find(ir.body)
     assert body_pos != -1 and raw[body_pos:] == ir.body, "body 应完整出现在前言之后"
 
 
-def test_claude_known_supported_capability_no_warning(agents_cfg, cap_matrix, tmp_path):
+def test_claude_known_supported_capability_no_warning(agents_cfg, cap_matrix, tmp_path, canon):
     """requires = [web_search] 时 ClaudeCode(SUPPORTED)应不注警告。"""
     assert cap_matrix.query("web_search", "ClaudeCode") == "supported"
     ir = _make_ir(requires=["web_search"], body=b"search the web\n")

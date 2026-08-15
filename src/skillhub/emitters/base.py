@@ -99,19 +99,41 @@ class BaseEmitter(ABC):
 
     @staticmethod
     def write_resources(ir: SkillIR, target_skill_dir: Path, canonical_skill_dir: Path) -> None:
-        """resources/ 拷过去。canonical_skill_dir 是 skills/<name>/, 里面有 resources/。
+        """把 canonical skill 目录的完整结构保真同步到目标(除 SKILL.md / .agent_overrides)。
 
-        最终结构: target_skill_dir/SKILL.md + target_skill_dir/resources/...
-        M0 还没有真实 skill, M2 实测真 skill 时启用。
+        真实 agent skill 的资源是任意结构(scripts/ references/ rooms/ _meta.json ...),
+        且 SKILL.md body 里的相对路径引用必须继续有效 — 所以不能收拢进 resources/,
+        必须原样镜像。同时删除目标端已不在源端的条目(防残留旧文件)。
         """
-        src_res = canonical_skill_dir / "resources"
-        if not src_res.exists():
-            return
-        # 跳过已有目标先把 resources 重建(防残留旧文件)
-        dst_res = target_skill_dir / "resources"
-        if dst_res.exists():
-            shutil.rmtree(dst_res)
-        shutil.copytree(src_res, dst_res)
+        src = Path(canonical_skill_dir)
+        dst = Path(target_skill_dir)
+        dst.mkdir(parents=True, exist_ok=True)
+        skip = {"SKILL.md", ".agent_overrides"}
+
+        src_entries = {e.name for e in src.iterdir()} - skip
+        # 删目标端已不在源端的条目(SKILL.md 由 emitter 写, 不动)
+        for e in list(dst.iterdir()):
+            if e.name == "SKILL.md":
+                continue
+            if e.name not in src_entries:
+                if e.is_symlink() or e.is_file():
+                    e.unlink()
+                else:
+                    shutil.rmtree(e)
+        # 拷源端条目(先清目标同名再拷, 保证内容一致)
+        for name in sorted(src_entries):
+            s = src / name
+            d = dst / name
+            if d.is_symlink() or d.is_file():
+                d.unlink()
+            elif d.exists():
+                shutil.rmtree(d)
+            if s.is_symlink():
+                d.symlink_to(s.resolve())
+            elif s.is_dir():
+                shutil.copytree(s, d)
+            else:
+                shutil.copy2(s, d)
 
     @staticmethod
     def symlink_skill_dir(canonical_skill_dir: Path, target_skill_dir: Path) -> None:
