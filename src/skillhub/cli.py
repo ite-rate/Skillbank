@@ -21,7 +21,8 @@ from pathlib import Path
 __all__ = ["main", "build_parser"]
 
 # /Users/ss/Documents/main_store/temp/SkillHub/src/skillhub/cli.py -> repo root
-REPO_ROOT = Path(__file__).resolve().parents[3]
+# parents[0]=skillhub  [1]=src  [2]=SkillHub
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 # --- subcommand stubs (real implementations land in later milestones) ---
@@ -51,10 +52,38 @@ def _cmd_add(args: argparse.Namespace) -> int:
 
 def _cmd_rm(args: argparse.Namespace) -> int:
     """M5: removal chain — delete deployed copies per manifest, keep canonical."""
-    print(f"[rm] TODO (M5): removal chain for skill {args.name!r}")
-    print("  - delete deployed copies on this machine per manifest")
-    print("  - mark pending_deletion for other machines")
-    print("  - keep canonical (level: disable stashes rather than deletes)")
+    from skillhub.manifest import DeploymentsManifest
+
+    manifest_path = REPO_ROOT / "manifests" / "deployments.json"
+    manifest = DeploymentsManifest.load(manifest_path)
+    recs = manifest.find(args.name)
+    if not recs:
+        print(f"[rm] skill {args.name!r} 无 manifest 部署记录(未同步过或已删), 无动作")
+        return 0
+
+    machine = args.machine
+    local_recs = [r for r in recs if r.machine == machine]
+    remote_recs = [r for r in recs if r.machine != machine]
+
+    print(f"[rm] {args.name!r}: 本机({machine}) {len(local_recs)} 条, 其它机器 {len(remote_recs)} 条")
+
+    if args.dry_run:
+        for a in manifest.delete_local(args.name, machine, dry_run=True):
+            print(f"  [dry-run] {a}")
+        for a in manifest.process_pending_deletions(machine, dry_run=True):
+            print(f"  [dry-run] {a}")
+        print("  (dry-run: 其它机器仍会标 pending_deletion, 那边下次 sync 时删)")
+        return 0
+
+    actions = manifest.delete_local(args.name, machine)
+    for a in actions:
+        print(f"  {a}")
+    n_pending = manifest.mark_pending_deletion(args.name, except_machine=machine)
+    if n_pending:
+        print(f"  标记 pending_deletion x{n_pending}(其它机器下次 sync 时删)")
+    manifest.save()
+    print(f"  manifest 已更新: {manifest_path}")
+    print(f"  canonical 保留在 {REPO_ROOT / 'skills' / args.name}(disable 语义=stash, git 可恢复)")
     return 0
 
 
@@ -119,6 +148,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Remove a skill + clean deployed copies (manifest-driven; canonical kept)",
     )
     sp.add_argument("name", help="canonical skill name")
+    sp.add_argument("--machine", default="mac-main", help="当前机器别名(machines.toml)")
+    sp.add_argument("--dry-run", action="store_true", help="只报告不动盘")
     sp.set_defaults(func=_cmd_rm)
 
     sp = sub.add_parser("list", help="List deployment state (skill x agent x machine)")
