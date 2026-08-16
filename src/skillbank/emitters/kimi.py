@@ -51,12 +51,12 @@ class KimiEmitter(BaseEmitter):
 
     def deploy(
         self, ir: SkillIR, deploy_root: Path, cfg: AgentConfig,
-        canonical_skill_dir: Path, prompt_bytes: bytes = b"",
+        canonical_skill_dir: Path,
     ) -> EmitterResult:
         """cp SKILL.md + resources/ 到 ~/.kimi-code/skills/<name>/"""
         skill_target_dir = Path(deploy_root) / ir.name
         skill_target_dir.mkdir(parents=True, exist_ok=True)
-        content = self.build_skill_md_bytes(ir, cfg, prompt_bytes, canonical_skill_dir)
+        content = self.build_skill_md_bytes(ir, cfg, canonical_skill_dir)
         skill_md_path = skill_target_dir / "SKILL.md"
         self.write_skill_md(content, skill_md_path)
         self.write_resources(ir, skill_target_dir, canonical_skill_dir)

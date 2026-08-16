@@ -201,19 +201,6 @@ def test_sync_agent_not_on_machine_not_planned(tmp_path):
     assert all(i.agent != "Codex" for i in ctx.plan)
 
 
-def test_sync_prompt_injected_for_missing_capability(tmp_path):
-    """requires 含 ClaudeCode 不支持的能力时, deployed 顶部应有 ⚠️ 前言(body 仍零损耗)。"""
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
-    body = b"## gen\n\nmake image\n"
-    _write_canonical(repo, "img", body=body, requires=["image_generation"],
-                     native_agent="Hermes")
-    ctx = collect(repo, "m1", ["img"], ["ClaudeCode"], machines, agents_cfg, manifest)
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
-    raw = (tmp_path / "claude" / "img" / "SKILL.md").read_bytes()
-    assert "\u26a0\ufe0f".encode() in raw, "缺能力硬警告应注入"
-    assert raw.endswith(body), "body 仍字节等值(前言在外面)"
-
-
 def test_sync_agent_not_installed_skipped_no_orphan_dirs(tmp_path):
     """机器配置了 agent 但其 home 目录不存在(没装)→ skip 且绝不 mkdir 造孤儿目录。"""
     repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)

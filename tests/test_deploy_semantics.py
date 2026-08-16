@@ -64,7 +64,7 @@ def test_deployed_zero_loss_semantics_with_prompt(tmp_path):
     # 前言存在于 fm 与 body 之间(🪧 native + ⚠️ image_generation unsupported)
     fm, _, _ = _fm_body_raw(tmp_path / "cc" / "img" / "SKILL.md")
     assert set(fm) == {"name", "description"}
-    assert "\U0001faa7".encode() in raw and "\u26a0\ufe0f".encode() in raw
+    assert "\U0001faa7".encode() not in raw, "前言已砍, 不应有 native 提示"
     # 资源镜像
     assert (tmp_path / "cc" / "img" / "scripts" / "run.py").read_text() == "print(1)\n"
     # manifest

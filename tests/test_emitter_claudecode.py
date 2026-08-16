@@ -18,7 +18,6 @@ from skillbank.agents import AgentsConfig
 from skillbank.capabilities import CapabilityMatrix
 from skillbank.emitters.claudecode import ClaudeCodeEmitter
 from skillbank.ir import Level, SkillIR
-from skillbank.prompt_inject import inject_prompts
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -70,7 +69,7 @@ def test_claude_body_identical_after_emit(agents_cfg, tmp_path, canon):
 
     deploy_root = tmp_path / "claude-skills"
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, deploy_root, cfg, tmp_path / "canonical" / "demo", prompt_bytes=b"")
+    result = em.deploy(ir, deploy_root, cfg, tmp_path / "canonical" / "demo")
 
     # 读回 deployed SKILL.md, 切出 body(从第二个 '---\\n' 之后)
     raw = result.deployed_path.read_bytes()
@@ -90,7 +89,7 @@ def test_claude_crlf_preserved_in_deployed(agents_cfg, tmp_path, canon):
     ir = _make_ir(body=body)
     cfg = agents_cfg.get("ClaudeCode")
     em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, canon, prompt_bytes=b"")
+    result = em.deploy(ir, tmp_path / "x", cfg, canon)
     raw = result.deployed_path.read_bytes()
     assert b"CRLF\r\nmust not be LF\n" in raw, "CRLF body 被 emitter 改成 LF — 零损耗破"
 
@@ -164,71 +163,3 @@ def test_claude_long_description_not_truncated(agents_cfg, tmp_path, canon):
     assert fm["description"] == long_desc, "Claude description 被截断 — 不应有长度限制"
 
 
-def test_claude_prompt_injection_with_capabilities(agents_cfg, cap_matrix, tmp_path, canon):
-    """requires 中 unsupported 能力 + native_agent 前言应当拼在 body 前。
-
-    用真实 capabilities.toml 矩阵: ClaudeCode 的 image_generation = unsupported,
-    取 requires=[image_generation], 期望出现"建议换 Agent"硬警告。
-    """
-    ir = _make_ir(
-        native_agent="Hermes",
-        requires=["image_generation"],
-        body=b"## generate image\n\ndo it\n",
-    )
-    cfg = agents_cfg.get("ClaudeCode")
-    prompt_bytes = inject_prompts(ir, "ClaudeCode", cap_matrix)
-
-    # 期望前言含两种: native_agent 提示 + image_generation unsupported 警告
-    assert "\U0001faa7".encode() in prompt_bytes, "native_agent 来源提示符号未出现"
-    assert "\u26a0\ufe0f".encode() in prompt_bytes, "能力缺失硬警告未注入"
-    assert b"image_generation" in prompt_bytes, "缺失能力名未出现在前言"
-    assert b"Hermes" in prompt_bytes, "推荐 Agent Hermes 未出现在前言"
-
-    # 通过 emitter deploy 写出来, body 在前言之后仍字节等值
-    em = ClaudeCodeEmitter()
-    result = em.deploy(ir, tmp_path / "x", cfg, canon, prompt_bytes=prompt_bytes)
-    raw = result.deployed_path.read_bytes()
-    # body 必须完整出现在文件末尾(前言拼前)
-    body_pos = raw.find(ir.body)
-    assert body_pos != -1 and raw[body_pos:] == ir.body, "body 应完整出现在前言之后"
-
-
-def test_claude_known_supported_capability_no_warning(agents_cfg, cap_matrix, tmp_path, canon):
-    """requires = [web_search] 时 ClaudeCode(SUPPORTED)应不注警告。"""
-    assert cap_matrix.query("web_search", "ClaudeCode") == "supported"
-    ir = _make_ir(requires=["web_search"], body=b"search the web\n")
-    prompt_bytes = inject_prompts(ir, "ClaudeCode", cap_matrix)
-    # native_agent=None, web_search=supported -> 前言应为空
-    assert prompt_bytes == b"", f"supported 能力不应注入前言, got: {prompt_bytes!r}"
-
-def test_claude_unknown_capability_soft_warning_does_not_block(agents_cfg, cap_matrix):
-    """unknown 能力应注软警告且措辞不怂恿模型放弃执行。"""
-    # web_search 在 Codex 是 unknown, 用 Codex 测(capability matrix 实测)
-    ir = SkillIR(
-        name="demo", description="d", body=b"## task\nsearch\n",
-        requires=["web_search"], native_agent=None,
-    )
-    prompt = b""
-    from skillbank.prompt_inject import inject_prompts
-
-    # Codex.web_search = unknown
-    pb = inject_prompts(ir, "Codex", cap_matrix)
-    assert "\u2753".encode() in pb, "unknown 应有 ❓ 软警告"
-    # 措辞柔和:含"可尝试"/"不必中止"等不放弃执行的关键字
-    assert (b"\xe5\x8f\xaf\xe5\xb0\x9d\xe8\xaf\x95" in pb) or (b"\xe4\xb8\x8d\xe5\xbf\x85" in pb), \
-        f"unknown 措辞应柔和(可尝试/不必中止), got: {pb!r}"
-    # 不含"建议改用"/"缺"等 unsupported 硬警告关键字
-    assert "\u26a0\ufe0f".encode() not in pb, "unknown 不应用硬警告⚠️符号"
-
-
-def test_claude_unsupported_capability_uses_hard_warning(agents_cfg, cap_matrix):
-    """unsupported 仍用 ⚠️ 硬警告 + '建议改用'(与 unknown 区分开)。"""
-    ir = SkillIR(
-        name="demo", description="d", body=b"## task\nimage\n",
-        requires=["image_generation"], native_agent=None,
-    )
-    pb = inject_prompts(ir, "ClaudeCode", cap_matrix)
-    assert "\u26a0\ufe0f".encode() in pb, "unsupported 应用硬警告"
-    assert "\u5efa\u8bae\u6539\u7528".encode() in pb, "'建议改用' 应在硬警告里"
-    # 不应用 unknown 的 ❓ 符号
-    assert "\u2753".encode() not in pb

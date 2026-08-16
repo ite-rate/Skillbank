@@ -60,7 +60,7 @@ class BaseEmitter(ABC):
         deploy(ir, deploy_root, cfg) -> EmitterResult
 
     base 提供:
-        build_skill_md_bytes(ir, cfg, prompt_bytes=b"") -> bytes   最终拼字节流
+        build_skill_md_bytes(ir, cfg) -> bytes   最终拼字节流
         write_skill_md(bytes, path)        普通文件写入
         write_resources(ir, target_skill_dir)    resources/ 拷贝
         symlink_skill_dir(canonical_dir, target_skill_dir)  ZCode 等用
@@ -77,7 +77,7 @@ class BaseEmitter(ABC):
     @abstractmethod
     def deploy(
         self, ir: SkillIR, deploy_root: Path, cfg: AgentConfig,
-        canonical_skill_dir: Path, prompt_bytes: bytes = b"",
+        canonical_skill_dir: Path,
     ) -> EmitterResult:
         """把 IR + 前言写到目标 Agent 目录的对应位置(cp/ln)。"""
         ...
@@ -100,11 +100,10 @@ class BaseEmitter(ABC):
             return tomllib.load(fh)
 
     def build_skill_md_bytes(self, ir: SkillIR, cfg: AgentConfig,
-                             prompt_bytes: bytes = b"",
                              canonical_skill_dir: Path | None = None) -> bytes:
         """frontmatter block + body 顶前言 + body 拼字节流。
 
-        body bytes 不动; 前言拼在 frontmatter 之后、body 之前。
+        body bytes 不动, 直接跟在 frontmatter 后。
         如果给了 canonical_skill_dir, 会从 .agent_overrides/<agent>.toml 读
         该 Agent 专有字段叠加到 frontmatter(还原原生 Agent 能力)。
         """
@@ -115,7 +114,7 @@ class BaseEmitter(ABC):
             for k, v in overrides.items():
                 if k not in fm:  # 不覆盖 emitter 已写的字段
                     fm[k] = v
-        return emit_frontmatter_block(fm) + prompt_bytes + ir.body
+        return emit_frontmatter_block(fm) + ir.body
 
     @staticmethod
     def write_skill_md(content: bytes, path: Path) -> None:

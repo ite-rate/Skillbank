@@ -31,7 +31,6 @@ from skillbank.ir import Level, SkillIR
 from skillbank.manifest import DeployRecord, DeploymentsManifest
 from skillbank.machines import MachinesConfig
 from skillbank.parsers.canonical import parse_canonical
-from skillbank.prompt_inject import inject_prompts
 
 __all__ = ["PlanItem", "SyncContext", "collect", "show_plan", "execute"]
 
@@ -213,10 +212,9 @@ def execute(
         ir = ctx.irs[name]
         cfg = agents_cfg.get(agent)
         deploy_root = machines.get_skills_dir(machine, agent)
-        prompt = inject_prompts(ir, agent, caps)
         try:
             result = get_emitter(agent).deploy(
-                ir, deploy_root, cfg, repo_root / "skills" / name, prompt_bytes=prompt
+                ir, deploy_root, cfg, repo_root / "skills" / name
             )
         except Exception as e:  # noqa: BLE001 — 单个失败不中断其余
             print(f"  ✗ {name} → {agent}: {e}")
