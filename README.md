@@ -23,7 +23,7 @@ skillbank sync                              # 交互选 skill×Agent → 计划�
 | Skillbank key | 真实产品 | skills_dir (实测 mac-main) | 集成方式 |
 |---|---|---|---|
 | `ClaudeCode`  | Anthropic Claude Code  | `~/.claude/skills` | cp |
-| `ZCode`       | 智谱 ZCode (GLM-5.2) | `~/.zcode/skills` | **ln 软链** |
+| `ZCode`       | 智谱 ZCode (GLM-5.2) | `~/.zcode/skills` | cp |
 | `QwenWorkCN`  | 阿里 QwenWorkCN 千问办公(**非** Qwen Code CLI) | `~/.qwenworkcn/skills` | cp |
 | `TeleAgent`   | TeleAgent (OpenCode 内核) | `~/.config/TeleAgent/skills` | cp |
 | `Hermes`      | NousResearch Hermes | `~/.hermes/skills/<category>/` | cp, default `imported/` |
@@ -44,7 +44,7 @@ skillbank sync                              # 交互选 skill×Agent → 计划�
 name: canvas-design
 description: Create visual art. When the user asks for a poster, ...
 level: auto                            # auto | manual | experimental | disable
-native_agent: TeleAgent                # 可选;emitter 注"原生于 X"前言
+native_agent: TeleAgent                # 可选;skillbank list/doctor 展示用(不注入 deployed body)
 requires: [image_generation, file_write]   # 可选;capabilities.toml 中的能力标签
 description_zh: 创意海报设计...           # 可选;TeleAgent/QwenWork 双语镜像位
 name_zh: 创意海报设计                    # 可选
@@ -61,6 +61,7 @@ license: Complete terms in LICENSE.txt   # 可选
 
 Agent 专有字段(市场装来的 `install_source`/`skill_id` 等)不进 canonical,
 存 `.agent_overrides/<agent>.toml`(skill 目录下)。
+sync 部署到原生 Agent 时从 overrides 读回, 写入 deployed frontmatter(还原原生 Agent 能力)。
 
 ---
 
@@ -146,17 +147,18 @@ canonical SKILL.md (skills/<name>/SKILL.md)
   └─ parsers/canonical.parse_canonical()
         ├─ bytes 读全文, byte-level 正则切 frontmatter 边界(允许 \r\n)
         └─ body 取边界后的全部原字节 → SkillIR.body: bytes (不 decode 不 normalize)
-              └─ prompt_inject.injection_prompts()  # body bytes 不动, 前言拼在外
-                    └─ emitters/<agent>.emit()
-                          ├─ frontmatter yaml 重排(level 映射/双语镜像/Codex截断/...)
-                          ├─ resources/ 全目录镜像(相对路径继续有效)
-                          └─ 部署产物 SKILL.md 写盘
-                                └─ manifest 记录 (deploy_path + ir_hash=body sha256)
+              └─ emitters/<agent>.emit()
+                    ├─ frontmatter yaml 重排(level 映射/双语镜像/Codex截断/...)
+                    ├─ Agent 专有字段从 .agent_overrides/<agent>.toml 读回(还原原生能力)
+                    ├─ body 直接跟 frontmatter(无前言, 不注入任何元信息)
+                    ├─ resources/ 全目录镜像(相对路径继续有效)
+                    └─ 部署产物 SKILL.md 写盘
+                          └─ manifest 记录 (deploy_path + ir_hash=body sha256)
 ```
 
 **零损耗验证手段**: `pytest tests/test_roundtrip.py tests/test_deploy_semantics.py` —
 - parse(canonical) → emit_canonical → parse → body 等值
-- 部署产物文件末尾完整出现 canonical body 原字节, 前言在 frontmatter 与 body 之间
+- 部署产物文件末尾完整出现 canonical body 原字节
 
 ---
 
@@ -173,15 +175,11 @@ canonical 目标绝不动。
 
 ---
 
-## 能力矩阵(prompt injection)
+## 能力矩阵(capabilities.toml)
 
 `capabilities.toml` 记 13 能力标签 × 7 Agent 的四态(`supported`/`unsupported`/`unknown`/`partial`),
 来自 ZCode 全网搜官方文档实测(部分不通的标 `unknown`)。canonical 的 `requires: [cap]`
-当同步到某 Agent 时:
-- `unsupported` → body 顶注入 ⚠️ 硬警告 + 推荐具备该能力的 Agent
-- `unknown`    → body 顶注入 ❓ 软警告"可尝试当前 Agent 先执行,不必中止"
-- supported    → 不注前言
-- body 字节不动,前言是部署产物里的独立块,在 frontmatter 与 body 之间
+用于 `skillbank list` / `doctor` 展示(给用户看, 不注入 deployed body)。
 
 更换 Agent 升级后人工更 capabilities.toml 的对应行即可。
 
@@ -189,12 +187,12 @@ canonical 目标绝不动。
 
 ## 已知限制 / 后续 TODO
 
-- **kimi 端 manual 级失效**:无 frontmatter 禁触发字段;sync 输出 ⚠ 提示
+- **kimi 端 manual 级失效**:无 frontmatter 禁止触发字段;sync 输出 ⚠ 提示
 - **Hermes 超 100k 字符 skill**:emitter 跳过 Hermes(`method=skipped`),
   body 零损耗不破(Hermes 缺席此 skill, 其他 Agent 正常同步)
 - **`list` 不区分手动 skipped vs 未部署**(屏幕显示都用 `·`)— TODO #6
 - **sync 大量 skill 时无 `--all-skills`** 默认全选 — TODO #8
-- **canonical `_zh` vs 其他 Agent 字段名差异**,首次接触会困惑 — 本 README 已说明(#9)
+- **canonical `_zh` vs其他 Agent 字段名差异**,首次接触会困惑 — 本 README 已说明(#9)
 - **manifest 一个 JSON 增长无界** — 上百 skill 后考虑分片 — TODO #10
 - **import 跨 skill 相对路径引用**(`../shared/x`)— 已 warn 但不阻止 — TODO #11
 - **import 后 doctor 报未知字段** — TODO #12
@@ -211,19 +209,8 @@ canonical 目标绝不动。
 
 ## 测试 / 状态
 
-102/102 tests green:
+112/112 tests green:
 - `test_roundtrip.py` 12 — IR parser/emitter 回环零损耗(CRLF/中文/tabs/边界)
 - `test_emitter_*.py` 30+ — 7 Agent emitter 各自边界
 - `test_manifest.py` 15 — 删除链跨机语义
 - `test_scan.py` 9 — 路径自动探测 + 回写
-- `test_sync.py` 15 — 计划构建/执行/disable/orphan/Hermes skip/ZCode deferred
-- `test_importer.py` 14 — 反向导入字段映射/overrides/native 探测/路径 warn
-- `test_deploy_semantics.py` 1 — 部署零损耗语义回归锁
-- `test_machines.py` 9 — 路径配置与一致性
-
-## 实施轨迹(grilling → milestones)
-
-- 三轮 grilling → 17 硬决策落盘到项目记忆 `skill-hub-project-status.md`
-- M0 骨架 → M1 IR 核心 → M2 ClaudeCode → M3 4 cp emitter → M4 ZCode+kimi
-  → M5 manifest+删除链 → M6 sync 引擎+importer+全 CLI+scan+zcode-cleanup
-  → M6 修 P0×4 → M7 本 README
