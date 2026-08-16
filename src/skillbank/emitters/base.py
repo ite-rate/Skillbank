@@ -84,12 +84,37 @@ class BaseEmitter(ABC):
 
     # --- 公共 helper ---
 
-    def build_skill_md_bytes(self, ir: SkillIR, cfg: AgentConfig, prompt_bytes: bytes = b"") -> bytes:
+    @staticmethod
+    def load_agent_overrides(canonical_skill_dir: Path, agent_name: str) -> dict:
+        """从 .agent_overrides/<agent>.toml 读该 Agent 的专有字段(import 时抽的)。
+
+        返回 dict(空则无 overrides)。这些字段是 Agent 专有的(install_source/
+        skill_id/enabled_at/metadata.hermes 等), 不进 canonical, 但部署到原生
+        Agent 时必须写回 deployed frontmatter —— 否则迁移后能力有损(grilling 原则)。
+        """
+        ov_file = Path(canonical_skill_dir) / ".agent_overrides" / f"{agent_name}.toml"
+        if not ov_file.exists():
+            return {}
+        import tomllib
+        with open(ov_file, "rb") as fh:
+            return tomllib.load(fh)
+
+    def build_skill_md_bytes(self, ir: SkillIR, cfg: AgentConfig,
+                             prompt_bytes: bytes = b"",
+                             canonical_skill_dir: Path | None = None) -> bytes:
         """frontmatter block + body 顶前言 + body 拼字节流。
 
         body bytes 不动; 前言拼在 frontmatter 之后、body 之前。
+        如果给了 canonical_skill_dir, 会从 .agent_overrides/<agent>.toml 读
+        该 Agent 专有字段叠加到 frontmatter(还原原生 Agent 能力)。
         """
         fm = self.transform_frontmatter(ir, cfg)
+        # 叠加 Agent 专有字段(从 overrides 还原到 deployed frontmatter)
+        if canonical_skill_dir is not None:
+            overrides = self.load_agent_overrides(canonical_skill_dir, cfg.name)
+            for k, v in overrides.items():
+                if k not in fm:  # 不覆盖 emitter 已写的字段
+                    fm[k] = v
         return emit_frontmatter_block(fm) + prompt_bytes + ir.body
 
     @staticmethod

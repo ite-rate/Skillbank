@@ -69,7 +69,7 @@ class HermesEmitter(BaseEmitter):
     ) -> EmitterResult:
         """cp 到 ~/.hermes/skills/<category>/<name>/(category 默认 imported/); 100k 超限跳过。"""
         # 先拼字节流算总字符数(决定是否超限)
-        content = self.build_skill_md_bytes(ir, cfg, prompt_bytes)
+        content = self.build_skill_md_bytes(ir, cfg, prompt_bytes, canonical_skill_dir)
         total_chars = len(content.decode("utf-8", errors="replace"))
         file_max = cfg.file_size_max or HERMES_FILE_MAX
         if total_chars > file_max:
