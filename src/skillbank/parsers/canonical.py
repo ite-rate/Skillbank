@@ -54,4 +54,6 @@ def parse_canonical(path: Path) -> SkillIR:
     if not isinstance(fm, dict):
         raise InvalidCanonicalError(f"frontmatter 必须是 YAML mapping: {path}")
 
-    return SkillIR.from_frontmatter_dict(fm, body_bytes, source_path=Path(path))
+    return SkillIR.from_frontmatter_dict(
+        fm, body_bytes, source_path=Path(path), fm_raw=fm_bytes
+    )

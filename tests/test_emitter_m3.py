@@ -236,6 +236,36 @@ def test_hermes_manual_level_metadata_hermes_namespace(agents_cfg, tmp_path, can
     assert fm["metadata"]["hermes"]["disable-model-invocation"] is True
 
 
+def test_hermes_override_metadata_merges_not_overwrites(tmp_path, agents_cfg):
+    """override 的 metadata.hermes 与 emitter 写的 metadata.hermes 应递归合并。
+
+    回归: 此前叠加 overrides 用 `if k not in fm` 整键跳过, Hermes 已写 metadata
+    键时, override 里 metadata.hermes.{tags,related_skills} 全部丢失。
+    """
+    import tomli_w
+    from skillbank.parsers.canonical import parse_canonical
+
+    canon = tmp_path / "canonical" / "demo"
+    canon.mkdir(parents=True)
+    (canon / "SKILL.md").write_bytes(
+        b"---\nname: demo\ndescription: a skill\nlevel: manual\n---\n## body\n")
+    ov = canon / ".agent_overrides"
+    ov.mkdir()
+    (ov / "Hermes.toml").write_bytes(
+        tomli_w.dumps({"metadata": {"hermes": {"tags": ["debugging", "troubleshooting"]}}}).encode()
+    )
+    ir = parse_canonical(canon / "SKILL.md")
+    assert ir.fm_raw is not None
+
+    em = HermesEmitter()
+    result = em.deploy(ir, tmp_path / "x", agents_cfg.get("Hermes"), canon)
+    fm, _ = _split_frontmatter_body(result.deployed_path.read_bytes())
+
+    md = fm["metadata"]["hermes"]
+    assert md["disable-model-invocation"] is True, "emitter 写的 disable-model-invocation 丢失"
+    assert md["tags"] == ["debugging", "troubleshooting"], "override 的 tags 未合并进来"
+
+
 def test_hermes_description_truncated(agents_cfg, tmp_path, canon):
     """Hermes description 也有 1024 截断。"""
     long_desc = "z" * (CODEX_DESC_MAX + 100)

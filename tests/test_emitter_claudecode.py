@@ -157,3 +157,38 @@ def test_claude_long_description_not_truncated(agents_cfg, tmp_path, canon):
     assert fm["description"] == long_desc, "Claude description 被截断 — 不应有长度限制"
 
 
+def test_claude_frontmatter_quote_preserved_when_parsed(tmp_path, agents_cfg):
+    """从带引号真实 canonical 解析(字段级透传): 未截断 description 引号保留。
+
+    回归: 部署侧 safe_dump 全量重建曾去掉引号, 导致部署产物与 canonical 字节不一致。
+    """
+    from skillbank.parsers.canonical import parse_canonical
+
+    canon = tmp_path / "canonical" / "demo"
+    canon.mkdir(parents=True)
+    content = (
+        "---\n"
+        "name: demo\n"
+        "description: 'Quoted description with (1) parens (2) and (3) list.'\n"
+        "level: manual\n"
+        "---\n"
+        "# body\n"
+    )
+    (canon / "SKILL.md").write_text(content, encoding="utf-8")
+    ir = parse_canonical(canon / "SKILL.md")
+    assert ir.fm_raw is not None, "parse_canonical 应保留 frontmatter 原始字节"
+
+    em = ClaudeCodeEmitter()
+    result = em.deploy(ir, tmp_path / "x", agents_cfg.get("ClaudeCode"), canon)
+    raw = result.deployed_path.read_text("utf-8")
+
+    assert "description: 'Quoted description with (1) parens (2) and (3) list.'" in raw, \
+        "部署产物 description 原始引号被丢掉(字段级透传应保留)"
+    assert "disable-model-invocation: true" in raw, "manual 级应翻译成 disable-model-invocation"
+    # canonical 的 level 不应出现在部署 frontmatter
+    parts = raw.split("---\n", 2)
+    fm = yaml.safe_load(parts[1])
+    assert "level" not in fm, "canonical level 字段不应污染部署产物"
+
+
+

@@ -200,3 +200,54 @@ def test_body_hash_stable(tmp_path):
     ir1 = parse_canonical(dst / "SKILL.md")
 
     assert ir0.body_hash() == ir1.body_hash(), "往返后 body_hash 不一致 — body 已漂移"
+
+
+def test_frontmatter_bytes_stable_no_change(tmp_path):
+    """无变更时 frontmatter 字节完全一致(引号/顺序/缩进都不漂)。
+
+    回归: 此前 safe_dump 全量重建会去掉 description 引号(git diff 产生无意义噪音)。
+    """
+    original = (
+        '---\n'
+        'name: atelier\n'
+        'description: "Atelier (工作坊) — Creative breakthrough deliberation room."\n'
+        'level: manual\n'
+        'version: 1.2.0\n'
+        '---\n'
+        '# /atelier\n'
+        'body here\n'
+    )
+    src = tmp_path / "src"; src.mkdir()
+    src_skill = src / "SKILL.md"; src_skill.write_bytes(original.encode("utf-8"))
+    ir = parse_canonical(src_skill)
+
+    dst = tmp_path / "dst"; dst.mkdir()
+    emit_canonical(ir, dst / "SKILL.md")
+    out = (dst / "SKILL.md").read_bytes()
+
+    assert out == original.encode("utf-8"), "无变更时 frontmatter 字节应完全一致"
+
+
+def test_frontmatter_unchanged_fields_preserved_when_field_edited(tmp_path):
+    """只改一个字段时, 其余字段原字节保留(引号不丢)。"""
+    original = (
+        '---\n'
+        'name: atelier\n'
+        'description: "Atelier (工作坊) — quoted description."\n'
+        'level: manual\n'
+        'version: 1.2.0\n'
+        '---\n'
+        '# body\n'
+    )
+    src = tmp_path / "src"; src.mkdir()
+    src_skill = src / "SKILL.md"; src_skill.write_bytes(original.encode("utf-8"))
+    ir = parse_canonical(src_skill)
+    ir.level = Level.AUTO  # 只改 level
+
+    dst = tmp_path / "dst"; dst.mkdir()
+    emit_canonical(ir, dst / "SKILL.md")
+    out = (dst / "SKILL.md").read_text("utf-8")
+
+    assert '"Atelier (工作坊) — quoted description."' in out, "description 引号被丢掉"
+    assert 'version: 1.2.0' in out, "未变更字段 version 被改"
+    assert 'level: auto' in out and 'level: manual' not in out, "level 未生效"

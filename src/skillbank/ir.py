@@ -64,6 +64,11 @@ class SkillIR:
     agent_overrides: dict[str, dict] = field(default_factory=dict)
     resources: list[Path] = field(default_factory=list)
     source_path: Optional[Path] = None         # parser 溯源(写 manifest 用)
+    # canonical 字节稳定: parser 保留 frontmatter 原始字节 + 原始 dict,
+    # emit_canonical 据此做字段级透传——未变动的字段原字节保留, 只重写真正改动的字段。
+    # 否则 safe_dump 全量重建会丢引号/改字段顺序(git diff 产生无意义噪音)。
+    fm_raw: Optional[bytes] = None             # frontmatter 原始文本(不含 --- 边界)
+    fm_orig: Optional[dict] = None             # 原始解析出的 frontmatter dict
 
     def body_hash(self) -> str:
         """body 的 sha256 — manifest ir_hash 字段用, 跨机器确认零损耗。"""
@@ -95,16 +100,19 @@ class SkillIR:
         return fm
 
     @classmethod
-    def from_frontmatter_dict(cls, fm: dict, body: bytes, source_path: Optional[Path] = None) -> "SkillIR":
+    def from_frontmatter_dict(cls, fm: dict, body: bytes, source_path: Optional[Path] = None,
+                              fm_raw: Optional[bytes] = None) -> "SkillIR":
         """从 canonical frontmatter dict + body bytes 构建 IR。
 
         允许 frontmatter 含未识别字段(留作 leftover, 不抛错)。
+        fm_raw: frontmatter 原始文本 bytes(不含 --- 边界)。给定时存入 IR,
+        供 emit_canonical 做字段级透传(未动字段保原始字节)。
         """
         # required
         name = fm["name"]
         description = fm["description"]
         level = Level(fm.get("level", "auto"))
-        return cls(
+        ir = cls(
             name=name,
             description=description,
             body=body,
@@ -116,4 +124,7 @@ class SkillIR:
             version=fm.get("version"),
             license=fm.get("license"),
             source_path=source_path,
+            fm_raw=fm_raw,
+            fm_orig=dict(fm) if fm_raw is not None else None,
         )
+        return ir
