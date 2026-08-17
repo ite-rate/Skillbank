@@ -514,6 +514,64 @@ def _cmd_set_level(args: argparse.Namespace) -> int:
     return 0
 
 
+# --- archive / unarchive / archive-list ---
+
+
+def _cmd_archive(args: argparse.Namespace) -> int:
+    """归档 skill: mv skills/<name>/ → skills/.archive/<name>/ + 清已部署副本 + manifest 标 pending。
+
+    与 rm 的区别: rm 只删部署副本保留 canonical 在 skills/ 里; archive 把 canonical
+    也移到 .archive/(list 默认不显示, 完全"暂存"), 需要时 unarchive 恢复。
+    """
+    from skillbank.archive import _archived_exists, _skill_exists, archive_skill
+    from skillbank.manifest import DeploymentsManifest
+
+    if args.dry_run:
+        # dry-run: 不动盘, 只报告会做什么
+        if not _skill_exists(REPO_ROOT, args.name):
+            print(f"[archive] {args.name!r}: canonical 不存在(skills/{args.name}/)")
+            if _archived_exists(REPO_ROOT, args.name):
+                print(f"  (已在归档区: skills/.archive/{args.name}/)")
+            return 0
+        print(f"[archive] {args.name!r}: WOULD mv skills/{args.name}/ → skills/.archive/{args.name}/")
+        manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
+        recs = manifest.find(args.name)
+        print(f"  WOULD 清本机副本 {len([r for r in recs if r.machine == args.machine])} 个")
+        print(f"  WOULD 标其它机器 pending {len([r for r in recs if r.machine != args.machine])} 个")
+        return 0
+
+    manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
+    msg = archive_skill(REPO_ROOT, args.name, manifest=manifest, machine=args.machine)
+    print(f"[archive] {msg}")
+    return 0
+
+
+def _cmd_unarchive(args: argparse.Namespace) -> int:
+    """恢复归档 skill: mv 回 skills/ + set-level manual(默认不自动触发, 审过再 set-level auto)。"""
+    from skillbank.archive import unarchive_skill
+
+    msg = unarchive_skill(REPO_ROOT, args.name)
+    print(f"[unarchive] {msg}")
+    if "已恢复" in msg:
+        print(f"  下一步: skillbank sync -s {args.name} 重新部署")
+    return 0
+
+
+def _cmd_archive_list(args: argparse.Namespace) -> int:
+    """列出归档区的 skill。"""
+    from skillbank.archive import list_archived
+
+    archived = list_archived(REPO_ROOT)
+    if not archived:
+        print("[archive-list] 归档区为空")
+        return 0
+    print(f"[archive-list] {len(archived)} 个已归档 skill(skills/.archive/):")
+    for name in archived:
+        print(f"  - {name}")
+    print(f"  恢复: skillbank unarchive <name>")
+    return 0
+
+
 def _cmd_zcode_cleanup(args: argparse.Namespace) -> int:
     """把 ~/.zcode/skills 里的真实副本 mv 备份后软链到 canonical(逐个交互确认)。"""
     import shutil
@@ -650,6 +708,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="新 level(auto/manual/experimental/disable)",
     )
     sp.set_defaults(func=_cmd_set_level)
+
+    sp = sub.add_parser(
+        "archive",
+        help="归档 skill: mv canonical → skills/.archive/ + 清已部署副本(canonical 移走, 非删)",
+    )
+    sp.add_argument("name", help="canonical skill name")
+    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--dry-run", action="store_true")
+    sp.set_defaults(func=_cmd_archive)
+
+    sp = sub.add_parser(
+        "unarchive",
+        help="恢复归档 skill: mv 回 skills/ + set-level manual(审过再 set-level auto)",
+    )
+    sp.add_argument("name", help="归档区 skill name")
+    sp.set_defaults(func=_cmd_unarchive)
+
+    sp = sub.add_parser(
+        "archive-list",
+        help="列出归档区的 skill(skills/.archive/)",
+    )
+    sp.set_defaults(func=_cmd_archive_list)
 
     return p
 
