@@ -2,17 +2,15 @@
 
 集成方式(决策):
 - install_dir = ~/.claude/skills/<name>/
-- method = cp  整目录(SKILL.md + resources/)
+- 部署 = cp  整目录(SKILL.md + resources/)
 - 字段集 = Anthropic Skill 标准 frontmatter(name + description), canonical 其余字段一律不污染
   - level manual/experimental -> disable-model-invocation: true
   - level disable     -> emitter 不调用(上层 caller 在 sync 时筛掉 disable skill)
   - canonical 的 native_agent/requires/description_zh/name_zh/version/license 都是元字段,
     不要写到 Agent 文件(它们是 emitter 决策依据, 不是给 Agent LLM 看的)
 - description 不截断(Claude Code 无硬字符限制)
-- 不做 lang_duplication(Claude 用 description 单字段, 不需要中文镜像)
-- keep_native_fields = [](canonical 不污染 Claude)
 
-零损耗保证: body 经 prompt_inject 顶前言 + 直接 bytes 拼接, body 字节本身不变。
+零损耗保证: body 直接 bytes 拼接(前言注入功能未实现, 当前无前言), body 字节本身不变。
 """
 
 from __future__ import annotations

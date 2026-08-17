@@ -17,8 +17,10 @@ class AgentConfig:
 
     字段语义见 agents.toml 注释:
 - install_dir (仅文档参考! 部署路径唯一真相源是 machines.toml 的手填 skills_dir)
-      / method (cp|ln) / level 映射 / keep_native_fields / lang_duplication
-      / description_max / file_size_max / default_category / note
+      / level 映射 / description_max / file_size_max / default_category / note
+
+    全部 Agent 一律 cp 部署(7 个 emitter 均硬编码 cp; method 字段已删)。
+    双语字段镜像(_zh <-> _cn)在对应 emitter 里硬编码, 不走配置。
 
     2026-08-15 决策:删除 resolve_install_dir(home 展开)。
     实测同一 Agent 跨机器路径不保证一致(QwenWorkCN), 显式手填 machines.toml 最稳;
@@ -28,11 +30,8 @@ class AgentConfig:
     name: str
     display_name: str
     install_dir: str            # 仅文档参考, 部署不用它
-    method: str                 # cp | ln
     disable_invoke_field: Optional[str] = None
     disable_invoke_value: object = None
-    keep_native_fields: list[str] = field(default_factory=list)
-    lang_duplication: dict[str, list[str]] = field(default_factory=dict)
     description_max: Optional[int] = None
     file_size_max: Optional[int] = None
     default_category: Optional[str] = None
@@ -58,11 +57,8 @@ class AgentsConfig:
                 name=name,
                 display_name=body.get("display_name", name),
                 install_dir=body["install_dir"],
-                method=body.get("method", "cp"),
                 disable_invoke_field=body.get("disable_invoke_field"),
                 disable_invoke_value=body.get("disable_invoke_value"),
-                keep_native_fields=list(body.get("keep_native_fields", [])),
-                lang_duplication=dict(body.get("lang_duplication", {})),
                 description_max=body.get("description_max"),
                 file_size_max=body.get("file_size_max"),
                 default_category=body.get("default_category"),

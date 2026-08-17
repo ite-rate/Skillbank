@@ -20,7 +20,6 @@ import pytest
 import yaml
 
 from skillbank.agents import AgentsConfig
-from skillbank.capabilities import CapabilityMatrix
 from skillbank.emitters.canonical import emit_canonical
 from skillbank.ir import Level, SkillIR
 from skillbank.manifest import DeploymentsManifest
@@ -57,19 +56,18 @@ def _fake_env(tmp_path: Path, agents=("ClaudeCode", "ZCode", "Hermes")):
     machines.set_skills_dir("m1", "Hermes", str(tmp_path / "hermes"))
     machines.set_skills_dir("m2", "ClaudeCode", str(tmp_path / "claude2"))
     manifest = DeploymentsManifest(path=repo / "manifests" / "deployments.json")
-    caps = CapabilityMatrix.load(REPO_ROOT / "capabilities.toml")
-    return repo, agents_cfg, machines, manifest, caps
+    return repo, agents_cfg, machines, manifest
 
 
 def test_sync_deploys_and_body_zero_loss(tmp_path):
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     body = b"## Step\n\nline\r\nCRLF\n"
     _write_canonical(repo, "demo", body=body, resources={"scripts/run.py": "print(1)\n"})
 
     ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
     kinds = {(i.kind, i.skill) for i in ctx.plan}
     assert ("deploy", "demo") in kinds or ("keep", "demo") in kinds
-    rc = execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    rc = execute(repo, "m1", ctx, machines, agents_cfg, manifest)
 
     assert rc == 0
     # ClaudeCode 落盘 + body 字节等值
@@ -85,21 +83,82 @@ def test_sync_deploys_and_body_zero_loss(tmp_path):
 
 
 def test_sync_keep_when_hash_same(tmp_path):
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     _write_canonical(repo, "demo")
     ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
 
     ctx2 = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
     assert any(i.kind == "keep" and i.skill == "demo" for i in ctx2.plan)
 
 
+def test_sync_keep_does_not_rewrite_or_dirty_manifest(tmp_path):
+    """keep 项真跳过:不重写 deployed 文件、不刷 manifest(deployed_at 不变)、不 save manifest。"""
+    import os
+    import time
+
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
+    body = b"## body\n"
+    _write_canonical(repo, "demo", body=body)
+    ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
+
+    deployed = tmp_path / "claude" / "demo" / "SKILL.md"
+    deployed_mtime = deployed.stat().st_mtime_ns
+    manifest_path = repo / "manifests" / "deployments.json"
+    manifest.save()  # 确保落盘,固定基准 mtime
+    manifest_mtime = manifest_path.stat().st_mtime_ns
+    rec = manifest.find("demo", machine="m1", agent="ClaudeCode")[0]
+    deployed_at = rec.deployed_at
+
+    time.sleep(0.02)  # 隔开 mtime 精度
+
+    # 第二次 sync:body 未变 → keep
+    ctx2 = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
+    keep_items = [i for i in ctx2.plan if i.kind == "keep" and i.skill == "demo"]
+    assert keep_items, "应识别为 keep"
+    # keep 项不在 deploy_pairs
+    assert ("demo", "ClaudeCode") not in ctx2.deploy_pairs
+    execute(repo, "m1", ctx2, machines, agents_cfg, manifest)
+
+    # deployed 文件 mtime 不变(未重写)
+    assert deployed.stat().st_mtime_ns == deployed_mtime, "keep 项不应重写 deployed 文件"
+    # manifest 文件 mtime 不变(未 save)
+    assert os.stat(manifest_path).st_mtime_ns == manifest_mtime, "keep 项不应 save manifest"
+    # deployed_at 不变(未 upsert 刷新)
+    rec2 = manifest.find("demo", machine="m1", agent="ClaudeCode")[0]
+    assert rec2.deployed_at == deployed_at, "keep 项不应刷新 deployed_at"
+
+
+def test_sync_keep_then_body_change_redeploys(tmp_path):
+    """keep 跳过后改 body, 第三次 sync 应重新 deploy 并刷新 hash(真跳过不破坏后续重部署)。"""
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
+    _write_canonical(repo, "demo", body=b"## body v1\n")
+    execute(repo, "m1", collect(repo, "m1", None, None, machines, agents_cfg, manifest),
+            machines, agents_cfg, manifest)
+
+    # 第二次:body 未变 → keep, 不重写
+    ctx2 = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
+    assert ("demo", "ClaudeCode") not in ctx2.deploy_pairs
+    rec1 = manifest.find("demo", machine="m1", agent="ClaudeCode")[0]
+    hash1 = rec1.ir_hash
+
+    # 第三次:body 变了 → 应重新 deploy(进 deploy_pairs, 刷新 hash)
+    _write_canonical(repo, "demo", body=b"## body v2\n")
+    ctx3 = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
+    assert ("demo", "ClaudeCode") in ctx3.deploy_pairs, "body 变了应重新 deploy"
+    execute(repo, "m1", ctx3, machines, agents_cfg, manifest)
+    rec3 = manifest.find("demo", machine="m1", agent="ClaudeCode")[0]
+    assert rec3.ir_hash != hash1, "重部署后 hash 应刷新"
+    assert (tmp_path / "claude" / "demo" / "SKILL.md").read_bytes().endswith(b"## body v2\n")
+
+
 def test_sync_disable_cleans_local_and_pends_remote(tmp_path):
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     # 先部署到 m1
     _write_canonical(repo, "demo")
     execute(repo, "m1", collect(repo, "m1", None, None, machines, agents_cfg, manifest),
-            machines, agents_cfg, caps, manifest)
+            machines, agents_cfg, manifest)
     # 模拟 m2 也部署过(m2 有 ClaudeCode)
     from skillbank.manifest import DeployRecord
 
@@ -115,7 +174,7 @@ def test_sync_disable_cleans_local_and_pends_remote(tmp_path):
     ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
     kinds = [i.kind for i in ctx.plan if i.skill == "demo"]
     assert "delete" in kinds and "pending" in kinds, [str(i) for i in ctx.plan]
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
 
     assert not (tmp_path / "claude" / "demo").exists(), "m1 副本应被清"
     rec_m2 = manifest.find("demo", machine="m2")
@@ -127,7 +186,7 @@ def test_sync_disable_cleans_local_and_pends_remote(tmp_path):
 
 def test_sync_orphan_record_cleaned(tmp_path):
     """manifest 有记录但 canonical 已删(git rm 后 sync)→ 自动清理。"""
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     d = tmp_path / "claude" / "ghost"
     d.mkdir(parents=True)
     (d / "SKILL.md").write_bytes(b"x")
@@ -137,18 +196,18 @@ def test_sync_orphan_record_cleaned(tmp_path):
                                  deploy_path=str(d / "SKILL.md"), method="cp"))
     ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
     assert any(i.kind == "delete" and i.skill == "ghost" for i in ctx.plan)
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
     assert not d.exists() and manifest.find("ghost") == []
 
 
 def test_sync_hermes_oversize_skipped_and_stale_cleaned(tmp_path):
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     huge = ("line\n" * 20_100).encode()
     _write_canonical(repo, "big", body=huge)
 
     # 第一次: Hermes skip, 但 ClaudeCode cp
     ctx = collect(repo, "m1", ["big"], None, machines, agents_cfg, manifest)
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
     assert (tmp_path / "claude" / "big" / "SKILL.md").exists()
     assert not (tmp_path / "hermes" / "imported" / "big").exists()
     assert manifest.find("big", machine="m1", agent="Hermes") == []
@@ -162,14 +221,14 @@ def test_sync_hermes_oversize_skipped_and_stale_cleaned(tmp_path):
     manifest.upsert(DeployRecord(skill="big", machine="m1", agent="Hermes",
                                  deploy_path=str(stale / "SKILL.md"), method="cp"))
     ctx = collect(repo, "m1", ["big"], None, machines, agents_cfg, manifest)
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
     assert not stale.exists(), "Hermes skip 后旧副本应清"
     assert manifest.find("big", machine="m1", agent="Hermes") == []
 
 
 def test_sync_zcode_cp_overwrite_and_clean_target(tmp_path):
     """ZCode 改 cp 后: 真实目录被 cp 覆盖, 干净目标 cp 部署。"""
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     _write_canonical(repo, "demo")
 
     # 真实目录 → cp 覆盖(不再 deferred)
@@ -177,7 +236,7 @@ def test_sync_zcode_cp_overwrite_and_clean_target(tmp_path):
     real.mkdir(parents=True)
     (real / "SKILL.md").write_bytes(b"user real")
     ctx = collect(repo, "m1", ["demo"], ["ZCode"], machines, agents_cfg, manifest)
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
     assert b"user real" not in (real / "SKILL.md").read_bytes(), "应被 cp 覆盖"
     rec = manifest.find("demo", machine="m1", agent="ZCode")
     assert rec and rec[0].method == "cp"
@@ -186,7 +245,7 @@ def test_sync_zcode_cp_overwrite_and_clean_target(tmp_path):
     real2 = tmp_path / "zcode" / "fresh"
     _write_canonical(repo, "fresh")
     ctx = collect(repo, "m1", ["fresh"], ["ZCode"], machines, agents_cfg, manifest)
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
     assert real2.is_dir() and not real2.is_symlink(), "应是真实目录不是软链"
     assert (real2 / "SKILL.md").exists()
     rec2 = manifest.find("fresh", machine="m1", agent="ZCode")
@@ -195,7 +254,7 @@ def test_sync_zcode_cp_overwrite_and_clean_target(tmp_path):
 
 def test_sync_agent_not_on_machine_not_planned(tmp_path):
     """机器没配的 Agent(如 m1 无 Codex)不出现在计划。"""
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     _write_canonical(repo, "demo")
     ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
     assert all(i.agent != "Codex" for i in ctx.plan)
@@ -203,14 +262,14 @@ def test_sync_agent_not_on_machine_not_planned(tmp_path):
 
 def test_sync_agent_not_installed_skipped_no_orphan_dirs(tmp_path):
     """机器配置了 agent 但其 home 目录不存在(没装)→ skip 且绝不 mkdir 造孤儿目录。"""
-    repo, agents_cfg, machines, manifest, caps = _fake_env(tmp_path)
+    repo, agents_cfg, machines, manifest = _fake_env(tmp_path)
     # 配一个"没装"的: 父目录不存在
     machines.set_skills_dir("m1", "Codex", str(tmp_path / "nope" / ".codex" / "skills"))
     _write_canonical(repo, "demo")
     ctx = collect(repo, "m1", None, None, machines, agents_cfg, manifest)
     skips = [i for i in ctx.plan if i.kind == "skip" and i.agent == "Codex"]
     assert skips and "未安装" in skips[0].detail
-    execute(repo, "m1", ctx, machines, agents_cfg, caps, manifest)
+    execute(repo, "m1", ctx, machines, agents_cfg, manifest)
     assert not (tmp_path / "nope").exists(), "不允许为没装的 agent 造目录"
     assert manifest.find("demo", machine="m1", agent="Codex") == []
     # 对照: ClaudeCode(父目录在? 不在! tmp_path/claude 的父是 tmp_path 存在)正常部署

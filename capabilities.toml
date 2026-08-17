@@ -1,16 +1,20 @@
 # Skillbank capabilities.toml — Agent 工具能力矩阵(13 标签 x 7 Agent)
 #
+# ⚠ 本文件是人工参考文档, 代码不再加载(2026-08-17 清理)。
+#   capabilities.py 已删; sync/cli 不再读它。
+#   保留此文件仅作"各 Agent 能力实测对照"的人工查阅价值。
+#
 # 四态:
 #   supported  - 已证实支持
 #   unsupported- 已证实不支持
-#   unknown    - 未证实(不编造, emitter 走软警告)
+#   unknown    - 未证实
 #   partial    - 部分/间接支持(如靠 Skills/MCP 补全)
 #
-# canonical SKILL.md 的 requires: [tag, ...] 引用这里标签。
-# emitter 同步到某 Agent 时:
-#   requires 中某 tag 在该 Agent = unsupported -> body 顶插"建议换 Agent"硬警告
-#   requires 中某 tag 在该 Agent = unknown    -> 插"未证实"软警告(不阻止执行)
-#   body bytes 不动, 前言是 emitter 写盘时拼到 body 之前的独立段。
+# canonical SKILL.md 的 requires: [tag, ...] 字段当前仅作文档标注:
+#   - canonical frontmatter 仍保留 requires(IR/emit 认它)
+#   - emitter 不做能力过滤、不注入"建议换 Agent"前言(该功能从未实现)
+#   - list/doctor 不展示能力匹配
+#   如需能力驱动的部署过滤/提示, 待将来在 emitter 层实现(届时重新加载本文件)。
 #
 # 能力清单维护:ZCode 全网搜后写入(决策 7); Agent 升级时人工 grep -> 更新该行。
 

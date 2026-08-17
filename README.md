@@ -178,10 +178,15 @@ canonical 目标绝不动。
 ## 能力矩阵(capabilities.toml)
 
 `capabilities.toml` 记 13 能力标签 × 7 Agent 的四态(`supported`/`unsupported`/`unknown`/`partial`),
-来自 ZCode 全网搜官方文档实测(部分不通的标 `unknown`)。canonical 的 `requires: [cap]`
-用于 `skillbank list` / `doctor` 展示(给用户看, 不注入 deployed body)。
+来自 ZCode 全网搜官方文档实测(部分不通的标 `unknown`)。
 
-更换 Agent 升级后人工更 capabilities.toml 的对应行即可。
+**本文件是人工参考文档,代码不加载**(2026-08-17 清理):`capabilities.py` 已删,
+`sync`/`cli` 不再读它。canonical 的 `requires: [cap]` 字段当前仅作文档标注——
+canonical frontmatter 仍保留 `requires`(IR/emit 认它),但 emitter 不做能力过滤、
+不注入"建议换 Agent"前言(该功能从未实现),`list`/`doctor` 不展示能力匹配。
+如需能力驱动的部署过滤/提示,待将来在 emitter 层实现(届时重新加载本文件)。
+
+更换 Agent 升级后人工更 capabilities.toml 的对应行即可(供人工查阅)。
 
 ---
 

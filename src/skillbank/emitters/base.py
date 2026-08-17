@@ -5,11 +5,11 @@ emitter 输出格式(全部 Agent 都遵循):
 
 各 Agent override:
 - transform_frontmatter(ir, cfg) -> dict: 重排 frontmatter 字段为该 Agent 兼容子集
-- deploy(ir, target_path, ...): cp 写 SKILL.md + resources, 或 ln 软链整个 skill_dir
+- deploy(ir, target_path, ...): cp 写 SKILL.md + resources(全部 Agent 均 cp)
 
 公共逻辑(放在 base):
 - 拼最终 bytes (frontmatter + 顶前言 + body)
-- 目录创建 / 软链接 / cp
+- 目录创建 / cp
 - frontmatter yaml 序化(allow_unicode, sort_keys=False 保顺序)
 - 描述截断(各 Agent emitter 不重写)
 """
@@ -48,7 +48,7 @@ class EmitterResult:
     """emitter 一次 emit 的结果(给 manifest + CLI 展示用)。"""
 
     deployed_path: Path
-    method: str             # cp | ln | skipped
+    method: str             # cp | skipped
     note: str = ""          # 跳过/警告原因(file_size_max 超 / Agent 不在 machines 列表 等)
 
 
@@ -63,7 +63,6 @@ class BaseEmitter(ABC):
         build_skill_md_bytes(ir, cfg) -> bytes   最终拼字节流
         write_skill_md(bytes, path)        普通文件写入
         write_resources(ir, target_skill_dir)    resources/ 拷贝
-        symlink_skill_dir(canonical_dir, target_skill_dir)  ZCode 等用
     """
 
     def __init__(self, agent_name: str):
@@ -79,7 +78,7 @@ class BaseEmitter(ABC):
         self, ir: SkillIR, deploy_root: Path, cfg: AgentConfig,
         canonical_skill_dir: Path,
     ) -> EmitterResult:
-        """把 IR + 前言写到目标 Agent 目录的对应位置(cp/ln)。"""
+        """把 IR + 前言写到目标 Agent 目录的对应位置(cp)。"""
         ...
 
     # --- 公共 helper ---
@@ -159,14 +158,3 @@ class BaseEmitter(ABC):
             else:
                 shutil.copy2(s, d)
 
-    @staticmethod
-    def symlink_skill_dir(canonical_skill_dir: Path, target_skill_dir: Path) -> None:
-        """target_skill_dir 软链到 canonical_skill_dir(ZCode 等用)。
-
-        若 target 已是软链/文件, unlink 再 ln; 若是真实目录(M4 清理既有真实副本 archify 等),
-        由 caller 决定先备份, emitter 不动用户真实副本(决策: emitter 只对 manifest 管的 skill 操作)。
-        """
-        if target_skill_dir.is_symlink() or target_skill_dir.exists():
-            target_skill_dir.unlink()
-        target_skill_dir.parent.mkdir(parents=True, exist_ok=True)
-        target_skill_dir.symlink_to(canonical_skill_dir.resolve())

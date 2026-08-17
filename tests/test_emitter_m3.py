@@ -127,7 +127,7 @@ def test_qwenworkcn_zh_desc_direct_pass(agents_cfg, tmp_path, canon):
 
 
 def test_qwenworkcn_no_obsolete_fields(agents_cfg, tmp_path, canon):
-    """agents.toml 里 keep_native_fields 配的字段(native_agent 等)不主动写出去(防污染)。"""
+    """canonical 元字段(native_agent 等)与 Qwen Code CLI 作废字段都不主动写到 QwenWorkCN(防污染)。"""
     ir = _make_ir()
     ir.native_agent = "ClaudeCode"
     cfg = agents_cfg.get("QwenWorkCN")

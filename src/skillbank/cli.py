@@ -28,15 +28,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def _load_configs():
     from skillbank.agents import AgentsConfig
-    from skillbank.capabilities import CapabilityMatrix
     from skillbank.machines import MachinesConfig
 
     agents_cfg = AgentsConfig.load(REPO_ROOT / "agents.toml")
     machines = MachinesConfig.load(
         REPO_ROOT / "machines.toml", known_agents=set(agents_cfg.agents)
     )
-    caps = CapabilityMatrix.load(REPO_ROOT / "capabilities.toml")
-    return agents_cfg, machines, caps
+    return agents_cfg, machines
 
 
 def _is_tty() -> bool:
@@ -50,7 +48,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     from skillbank.manifest import DeploymentsManifest
     from skillbank.sync import collect, execute, show_plan
 
-    agents_cfg, machines, caps = _load_configs()
+    agents_cfg, machines = _load_configs()
     machine = args.machine
     if machine not in machines.machines:
         print(f"[sync] 未知机器 {machine!r}(machines.toml: {sorted(machines.machines)})")
@@ -92,7 +90,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         if not confirm("执行以上计划?"):
             print("[sync] 已取消")
             return 0
-    failures = execute(REPO_ROOT, machine, ctx, machines, agents_cfg, caps, manifest)
+    failures = execute(REPO_ROOT, machine, ctx, machines, agents_cfg, manifest)
     print(f"[sync] 完成" + (f"({failures} 个失败)" if failures else " ✓"))
     return 1 if failures else 0
 
@@ -147,9 +145,8 @@ def _rename_callback(orig_name: str, suggested: str, native: str):
 def _cmd_import(args: argparse.Namespace) -> int:
     from skillbank.importer import import_skill
     import yaml
-    import re
 
-    agents_cfg, machines, _ = _load_configs()
+    agents_cfg, machines = _load_configs()
     try:
         agent = args.agent
         if agent and agent not in agents_cfg.agents:
@@ -170,11 +167,11 @@ def _cmd_import(args: argparse.Namespace) -> int:
 
         # 检测源是否含市场标志(install_source/skill_id) -> 提示标 experimental
         try:
-            src_fm = yaml.safe_load(
-                re.match(rb"\A---\r?\n(.*?)\r?\n---\r?\n",
-                         (Path(args.path).expanduser() / "SKILL.md").read_bytes(),
-                         re.S).group(1)
-            )
+            from skillbank.parsers.canonical import FRONTMATTER_RE
+
+            raw = (Path(args.path).expanduser() / "SKILL.md").read_bytes()
+            m = FRONTMATTER_RE.match(raw)
+            src_fm = yaml.safe_load(m.group("fm")) if m else None
             if src_fm and (src_fm.get("install_source") or src_fm.get("skill_id")):
                 if args.level != "experimental":
                     print(f"  💡 来源带市场标志(install_source/skill_id),"
@@ -239,7 +236,7 @@ def _cmd_list(args: argparse.Namespace) -> int:
     from skillbank.manifest import DeploymentsManifest
     from skillbank.sync import _iter_canonical_skills
 
-    agents_cfg, machines, _ = _load_configs()
+    agents_cfg, machines = _load_configs()
     machine = args.machine
     if machine not in machines.machines:
         print(f"[list] 未知机器 {machine!r}")
@@ -252,13 +249,15 @@ def _cmd_list(args: argparse.Namespace) -> int:
     rows: list[tuple[str, str, str]] = []   # (skill, level, native)
     seen = set()
     import yaml
+    from skillbank.parsers.canonical import FRONTMATTER_RE
 
     for d in _iter_canonical_skills(REPO_ROOT):
         name = d.name
         seen.add(name)
         level, native = "?", ""
         try:
-            fm = yaml.safe_load((d / "SKILL.md").read_bytes().split(b"---\n")[1])
+            m = FRONTMATTER_RE.match((d / "SKILL.md").read_bytes())
+            fm = yaml.safe_load(m.group("fm")) if m else {}
             level = fm.get("level", "auto")
             native = fm.get("native_agent") or ""
         except Exception:  # noqa: BLE001 — 列表展示容错
@@ -362,7 +361,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 
     # 1. 配置互验
     try:
-        agents_cfg, machines, _ = _load_configs()
+        agents_cfg, machines = _load_configs()
         print(f"  ✓ 配置加载: {len(agents_cfg.agents)} agents, {len(machines.machines)} machines")
     except Exception as e:  # noqa: BLE001
         print(f"  ✗ 配置加载失败: {e}")
@@ -419,7 +418,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 def _cmd_scan(args: argparse.Namespace) -> int:
     from skillbank.scan import detect_agent, pick_best
 
-    agents_cfg, machines, _ = _load_configs()
+    agents_cfg, machines = _load_configs()
     machine = args.machine
     changes: dict[str, str] = {}
 
@@ -520,7 +519,7 @@ def _cmd_zcode_cleanup(args: argparse.Namespace) -> int:
     import shutil
     from datetime import datetime
 
-    agents_cfg, machines, _ = _load_configs()
+    agents_cfg, machines = _load_configs()
     machine = args.machine
     zdir = machines.get_skills_dir(machine, "ZCode")
     if zdir is None or not zdir.exists():

@@ -15,7 +15,6 @@ import pytest
 import yaml
 
 from skillbank.agents import AgentsConfig
-from skillbank.capabilities import CapabilityMatrix
 from skillbank.emitters.claudecode import ClaudeCodeEmitter
 from skillbank.ir import Level, SkillIR
 
@@ -34,11 +33,6 @@ def canon(tmp_path):
     d.mkdir(parents=True)
     (d / "SKILL.md").write_bytes(b"---\nname: demo\ndescription: a skill\nlevel: auto\n---\n## body\n")
     return d
-
-
-@pytest.fixture()
-def cap_matrix():
-    return CapabilityMatrix.load(REPO_ROOT / "capabilities.toml")
 
 
 def _make_ir(

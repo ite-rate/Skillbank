@@ -7,8 +7,8 @@
 - description 不截断(QwenWorkCN 实测无 1024 硬限)
 - canonical 元字段(native_agent/requires/version/license)不写入 QwenWorkCN 文件
 - 不取作废字段:priority/paths/user-invocable/source(那些属 Qwen Code CLI 开发者版, 不属 QwenWorkCN)
-- keep_native_fields 也暂不输出(避免污染; 反向导入时若是市场装来的 skill 自带
-  install_source/skill_id 等元数据, M6 反向 parser 会收, M2-M3 不主动写)
+- 市场元数据(install_source/skill_id 等)不主动写(避免污染; 反向导入时收进 .agent_overrides,
+  emitter 经 build_skill_md_bytes 全量叠加回 deployed frontmatter — 见 base.py)
 
 实测样本(QwenWorkCN 15 个 skill frontmatter 都不统一):
 - 自带 skill: name/version/description/description_zh/license

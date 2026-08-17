@@ -7,7 +7,7 @@
 - frontmatter 字段: Level enum + 7 个稳定可选字段(canonical 标准 frontmatter 约束)。
 - agent_overrides: 每个 Agent 专有字段副本(反向导入 Agent skill 时抽取)。
   canonical 不承载, emitter 用时按需取(从 skills/<name>/.agent_overrides/<agent>.toml)。
-- requires: 能力标签列表, 跨切关注, 用于 prompt_inject。
+- requires: 能力标签列表, 当前仅作文档标注(emitter 不注入前言、不做能力过滤)。
 
 往返零损耗的含义(roundtrip):
     parse(canonical) -> IR0

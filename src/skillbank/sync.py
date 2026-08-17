@@ -14,7 +14,7 @@
   skip      不部署(原因见 detail: 未装 / Hermes 超限 / 被过滤)
   delete    本机清理(该 skill 的旧部署)
   pending   其它机器标 pending_deletion
-  keep      hash 相同的重部署(幂等, 标记为保持)
+  keep      hash 相同,跳过不重写(真幂等;资源自愈交给 --force/doctor)
   warn      解析/一致性问题, 不中断
 """
 
@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import Optional
 
 from skillbank.agents import AgentsConfig
-from skillbank.capabilities import CapabilityMatrix
 from skillbank.emitters import get_emitter
 from skillbank.ir import Level, SkillIR
 from skillbank.manifest import DeployRecord, DeploymentsManifest
@@ -151,7 +150,10 @@ def collect(
             if rec and rec[0].ir_hash == ir.body_hash():
                 kind = "keep"
             ctx.plan.append(PlanItem(kind, name, agent, detail))
-            ctx.deploy_pairs.append((name, agent))
+            # keep 项不进 deploy_pairs:已对账(hash 相同), execute 跳过不重写、不刷 manifest。
+            # 资源自愈不是 keep 的职责(用户手动改部署端资源不会被纠正),需自愈用 --force/doctor。
+            if kind == "deploy":
+                ctx.deploy_pairs.append((name, agent))
     return ctx
 
 
@@ -184,7 +186,6 @@ def execute(
     ctx: SyncContext,
     machines: MachinesConfig,
     agents_cfg: AgentsConfig,
-    caps: CapabilityMatrix,
     manifest: DeploymentsManifest,
 ) -> int:
     """执行计划;返回非 0 表示有失败。manifest 有变更时 save。"""
@@ -206,6 +207,11 @@ def execute(
         if n:
             print(f"  pending_deletion x{n}: {skill}(其它机器下次 sync 删)")
             manifest_dirty = True
+
+    # keep 段:已对账的项不重写, 仅打印告知(避免与 skip/未部署混淆)。
+    for it in ctx.plan:
+        if it.kind == "keep":
+            print(f"  = {it.skill} → {it.agent}: keep(hash 相同, 跳过重写)")
 
     # 部署段
     for name, agent in ctx.deploy_pairs:
