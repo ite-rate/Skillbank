@@ -78,7 +78,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         agents_filter = [list(mcfg.agents)[i] for i in idx]
 
     ctx = collect(REPO_ROOT, machine, skills_filter, agents_filter, machines,
-                  agents_cfg, manifest)
+                  agents_cfg, manifest, force=args.force)
     print(f"[sync] machine={machine} 计划:")
     show_plan(ctx)
     if args.dry_run:
@@ -650,6 +650,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--to", dest="machine", default="mac-main", help="machine alias (default mac-main)")
     sp.add_argument("--dry-run", action="store_true", help="show plan, do not write")
     sp.add_argument("--yes", action="store_true", help="no interactive selection/confirm")
+    sp.add_argument("--force", action="store_true",
+                    help="强制重写已对账的部署(让 frontmatter 字段级透传/overrides 合并等非 body 变更落地)")
     sp.set_defaults(func=_cmd_sync)
 
     sp = sub.add_parser("add", help="Import a new skill (local path / git URL)")

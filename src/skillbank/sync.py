@@ -80,6 +80,7 @@ def collect(
     machines: MachinesConfig,
     agents_cfg: AgentsConfig,
     manifest: DeploymentsManifest,
+    force: bool = False,
 ) -> SyncContext:
     ctx = SyncContext()
     mcfg = machines.get_machine(machine)
@@ -147,11 +148,12 @@ def collect(
 
             kind = "deploy"
             rec = manifest.find(name, machine=machine, agent=agent)
-            if rec and rec[0].ir_hash == ir.body_hash():
+            if rec and rec[0].ir_hash == ir.body_hash() and not force:
                 kind = "keep"
             ctx.plan.append(PlanItem(kind, name, agent, detail))
             # keep 项不进 deploy_pairs:已对账(hash 相同), execute 跳过不重写、不刷 manifest。
             # 资源自愈不是 keep 的职责(用户手动改部署端资源不会被纠正),需自愈用 --force/doctor。
+            # force 时强制走 deploy(让 frontmatter 字段级透传/overrides 合并等非 body 变更落地)。
             if kind == "deploy":
                 ctx.deploy_pairs.append((name, agent))
     return ctx
