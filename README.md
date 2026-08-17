@@ -111,6 +111,12 @@ skillbank list                              # 状态表(c=cp p=pending ·=未部
 skillbank list --agent ClaudeCode --level auto
 skillbank set-level <name> <auto|manual|experimental|disable>   # 改触发策略
 
+# 归档(rm 留 canonical; archive 连 canonical 移走, list 默认不显示)
+skillbank archive <name>                    # mv skills/<name>/ → skills/.archive/<name>/ + 清部署副本
+skillbank archive <name> --machine laptop --dry-run
+skillbank unarchive <name>                  # mv 回 skills/ + set-level manual(审过再 set-level auto)
+skillbank archive-list                      # 列归档区 skill
+
 # ZCode 治理(可选, 谨慎 — zcode 真实副本迁入中央)
 skillbank zcode-cleanup                     # 逐个交互确认 + mv 备份到 ~/.zcode/skills.bak/<ts>/ → 软链 canonical
 skillbank zcode-cleanup --dry-run
@@ -182,6 +188,11 @@ canonical SKILL.md (skills/<name>/SKILL.md)
 那台机器下次 `skillbank sync` 时执行删除并清记录。ln 类型只 unlink 软链,
 canonical 目标绝不动。
 
+**归档 vs 删除**:`rm` 只删部署副本、canonical 仍留在 `skills/`(`list` 可见);
+`archive` 连 canonical 也移到 `skills/.archive/`(`list` 默认不显示, 完全暂存),
+`unarchive` 移回 `skills/` + 置 level=manual。`.archive/` 在 git 里追踪,
+canonical 跨机随仓库走, 不丢。
+
 ---
 
 ## 能力矩阵(capabilities.toml)
@@ -199,8 +210,6 @@ canonical 的 `requires: [cap]` 当前仅作文档标注:emitter 不做能力过
 - **kimi 端 manual 级失效**:无 frontmatter 禁止触发字段;sync 输出 ⚠ 提示
 - **Hermes 超 100k 字符 skill**:emitter 跳过 Hermes(`method=skipped`),
   body 零损耗不破(Hermes 缺席此 skill, 其他 Agent 正常同步)
-- **archive 模块已实现但未接 CLI**:`archive.py` 有 `archive_skill`/`unarchive_skill`,
-  但 CLI 无对应子命令。需要时在 cli.py 加 wiring
 - **manifest 一个 JSON 增长无界** — 上百 skill 后考虑分片
 - **import 跨 skill 相对路径引用**(`../shared/x`)— 已 warn 但不阻止
 - **包形态 skill**(如 dws 含 `multi/` 20 个子 skill):整包 cp 即可, 各 Agent 只扫顶层
