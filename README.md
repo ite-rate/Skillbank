@@ -7,6 +7,11 @@
 **单文件 Go 二进制**(静态编译, 无 Python/CGO 依赖, 一台 Mac 交叉编译全平台),
 外加一个 skill 分发包(装进 agent, 用自然语言操作)。
 
+> **本仓 = 工具仓**(纯代码 + skill 分发包)。skill 资产(你的中心仓)在**另一个
+> git 仓库**: `skills/ + manifests/ + agents.toml + machines.toml`,自己 `init`
+> 或 clone 后把路径写进 `~/.config/skillbank/config.toml` 即可,结构见
+> `skill/reference/conventions.md`。
+
 ---
 
 ## TL;DR — 新机器一条龙
