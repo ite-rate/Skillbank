@@ -86,8 +86,10 @@ sync 输出 ⚠ 提示模型仍可能自动触发,需靠 description 话术或�
 
 ```sh
 # 路径配置(每机器一次)
-skillbank scan                              # 探测 + 交互确认 + 写 machines.toml
+skillbank scan                              # 探测 + 交互确认 + 写 machines.toml + 绑定本机身份
 skillbank scan --yes                        # 非交互自动选最优候选
+skillbank scan --machine laptop             # 首次在新机器: 注册别名 + 绑定本机身份
+skillbank use <machine>                     # 仅绑定/查看本机身份(不动路径配置)
 skillbank doctor [--machine mac-main]       # 配置/路径/manifest/canonical/git 体检
 skillbank doctor --skill <name>            # 专项:body 引用 vs 资源镜像一致性(防 silent failure)
 
@@ -102,7 +104,7 @@ skillbank sync                              # 交互选 skill×Agent → 计划 
 skillbank sync -s <name> -a <agent> --yes   # 非交互单 skill 单 Agent
 skillbank sync -s <name>                    # 单 skill 到该机器全部 Agent
 skillbank sync --dry-run                    # 只看计划不动盘
-skillbank sync --to <machine>               # 不同机器(默认 mac-main)
+skillbank sync --to <machine>               # 指定其它机器(默认 = 本机绑定身份)
 
 # 删除 / 状态 / level
 skillbank rm <name>                         # 本机删副本 + 其它机器标 pending(下次 sync 执行)
@@ -134,10 +136,19 @@ pip install -e .
 
 # 第二台机器:
 skillbank scan --machine laptop             # 探测这台装的 agent → 写 machines.toml
+#   - 同时把本机身份绑定为 laptop(.skillbank-machine, gitignored)
 #   - 没装的 agent 会被探测标 ✗ 不留下配置 → sync 时跳过不报错
 #   - 各机器的 agent 路径独立手填/确认(QwenWorkCN 在 Mac 与笔记本路径不一致也无所谓)
-skillbank sync --to laptop                  # 拉到该机本装的 agent 子集
+skillbank sync                              # 拉到该机本装的 agent 子集
 ```
+
+**本机身份绑定**(2026-08-30 起):所有命令的 `--machine`/`--to` 默认取绑定值,
+不再硬编码 mac-main:
+- 绑定:`skillbank use <别名>` 或 `skillbank scan --machine <别名>`(存 repo 内
+  `.skillbank-machine`, gitignored;重 clone 需重新绑定)
+- 未绑定时, 依赖默认值的命令**拒绝执行**并给指引(防在别的机器上按 mac-main
+  名义误动本机文件);显式 `--machine` 仍可用
+- 已绑定后显式传不同 `--machine`(sync/rm/archive 等会动本机磁盘的命令)会打 ⚠ 提示
 
 跨机机制 = **git 仓库本身当跨机消息总线**:
 - Mac 改 canonical + sync → manifest 写记录(谁部署到哪) → git commit/push

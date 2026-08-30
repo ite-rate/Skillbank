@@ -15,6 +15,13 @@
 - [ ] 真机首次实战: 用户亲手 import+sync 到 mac-main(需用户批准 — 会真写 `~/.claude/skills` 等)
 - [ ] git remote 接入(GitHub 私库 / 自托管) — 由用户决定后配置
 
+## 已修(2026-08-30)
+
+- [x] 机器身份硬编码(风险项):所有命令 `--machine` 默认 "mac-main", 在别的机器裸跑
+  sync/rm 会按 mac-main 名义误动本机文件 → `skillbank/identity.py` 本机绑定
+  (`.skillbank-machine`, gitignored), `use`/`scan --machine` 绑定, 未绑定拒绝执行,
+  显式 flag ≠ 绑定时 ⚠;9 处 CLI 默认值改 None。测试 test_identity.py(10 项)
+
 ## P2 后续 polish
 
 - [ ] #6 Hermes skipped 在 `list` 里区分原因(存 skipped meta 入 manifest, screen 区分 `·`/`~`)
@@ -25,6 +32,8 @@
 - [ ] #12 import 后 doctor 报告未识别 frontmatter 字段(已透传到 overrides, 但用户应知情)
 - [ ] #13 交叉 symlink 去重(claude<->zcode<->codex 指同一处时,list 应折叠展示而非 3 行重复)
 - [ ] #14 Hermes `.usage.json` 作为真实使用频率源入 Skillbank `list`(本扫描调研后定方案)
+- [ ] #15 本机身份 hostname 交叉校验:绑定文件存 hostname, machines.toml 记各机器
+  hostname, doctor 比对不一致时报错(目前绑定文件只有别名一行, 格式留了扩展位)
 
 ## 长期 consideration(不计入迭代, 留碍)
 

@@ -23,6 +23,8 @@ env/
 # local runtime state (manifest 在 git 里跨机同步; 临时态不入 git)
 *.local-state.json
 *.log
+# 本机身份绑定(machines.toml 里的机器别名)— 每台机器各自绑定, 不跨机
+.skillbank-machine
 
 # pyproject build cache
 .pytest_cache/

@@ -124,7 +124,7 @@ def import_skill(
     level: str = "manual",
     agent: Optional[str] = None,
     machines: Optional[MachinesConfig] = None,
-    machine: str = "mac-main",
+    machine: Optional[str] = None,
     force: bool = False,
     rename_callback=None,
     auto_rename: bool = True,
@@ -164,7 +164,7 @@ def import_skill(
 
     # native_agent: 显式 > 路径探测
     native = agent
-    if native is None and machines is not None:
+    if native is None and machines is not None and machine is not None:
         native = detect_source_agent(src_dir, machines, machine)
 
     # === 重名处理 ===

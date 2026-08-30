@@ -2,6 +2,7 @@
 
 子命令:
     sync           canonical → 该机器 Agents(collect→show→confirm→execute;无 flag 交互选)
+    use            绑定本机身份(哪个 machines.toml 机器别名);--machine 默认取它
     add            导入新 skill(本地路径 / git URL)
     import         从某 Agent 目录反向导入既有 skill 进 canonical
     rm             删除部署副本(manifest 驱动;canonical 保留)
@@ -18,12 +19,15 @@ import subprocess
 import sys
 from pathlib import Path
 
+from skillbank.identity import BINDING_FILENAME
 from skillbank.ir import Level
 
 __all__ = ["main", "build_parser"]
 
 # .../Skillbank/src/skillbank/cli.py -> repo root(parents[0]=skillbank [1]=src [2]=Skillbank)
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+BINDING_NOTE = f"绑定文件 ./{BINDING_FILENAME}, gitignored"
 
 
 def _load_configs():
@@ -41,6 +45,29 @@ def _is_tty() -> bool:
     return sys.stdin.isatty() and sys.stdout.isatty()
 
 
+def _resolve_machine(args: argparse.Namespace, machines, *,
+                     destructive: bool = False) -> str:
+    """解析本命令的 machine:显式 flag > 本机绑定;未绑定 → 报错退出。
+
+    destructive: 命令会动本机磁盘(sync 执行/rm/archive 等)— 显式 flag 与
+    本机绑定不同时打 ⚠(防在别的机器上按它机名义删/标本机文件)。
+    """
+    from skillbank.identity import read_binding, resolve_machine
+
+    explicit = getattr(args, "machine", None)
+    try:
+        machine = resolve_machine(REPO_ROOT, machines, explicit)
+    except ValueError as e:
+        print(f"[{getattr(args, 'cmd', 'skillbank')}] ✗ {e}")
+        raise SystemExit(2)
+    if destructive and explicit is not None:
+        bound = read_binding(REPO_ROOT)
+        if bound is not None and bound != explicit:
+            print(f"  ⚠ 显式 --machine {explicit!r} ≠ 本机绑定 {bound!r}:"
+                  f"以下将对本机磁盘按 {explicit!r} 名义操作")
+    return machine
+
+
 # --- sync ---
 
 
@@ -49,10 +76,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     from skillbank.sync import collect, execute, show_plan
 
     agents_cfg, machines = _load_configs()
-    machine = args.machine
-    if machine not in machines.machines:
-        print(f"[sync] 未知机器 {machine!r}(machines.toml: {sorted(machines.machines)})")
-        return 2
+    machine = _resolve_machine(args, machines, destructive=True)
     manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
 
     skills_filter = args.skills
@@ -79,7 +103,7 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
     ctx = collect(REPO_ROOT, machine, skills_filter, agents_filter, machines,
                   agents_cfg, manifest, force=args.force)
-    print(f"[sync] machine={machine} 计划:")
+    print(f"[sync] machine={machine}{'(本机绑定)' if args.machine is None else '(显式指定)'} 计划:")
     show_plan(ctx)
     if args.dry_run:
         print("[sync] dry-run 结束, 未写任何文件")
@@ -115,9 +139,11 @@ def _cmd_add(args: argparse.Namespace) -> int:
                 for w in warns:
                     print(f"  ⚠ {w}")
         else:
+            machines = _load_configs()[1]
+            machine = _resolve_machine(args, machines)
             d, warns = import_skill(Path(src).expanduser(), REPO_ROOT,
                                    level=args.level, force=args.force,
-                                   machines=_load_configs()[1], machine=args.machine,
+                                   machines=machines, machine=machine,
                                    **rename_kw)
             print(f"[add] 导入 → {d}")
             for w in warns:
@@ -152,9 +178,10 @@ def _cmd_import(args: argparse.Namespace) -> int:
         if agent and agent not in agents_cfg.agents:
             print(f"[import] 未知 agent {agent!r}(agents.toml: {sorted(agents_cfg.agents)})")
             return 2
+        machine = _resolve_machine(args, machines)
         kwargs = dict(
             level=args.level, agent=agent,
-            machines=machines, machine=args.machine, force=args.force,
+            machines=machines, machine=machine, force=args.force,
         )
         if args.yes or not _is_tty():
             kwargs["auto_rename"] = True
@@ -195,13 +222,13 @@ def _cmd_import(args: argparse.Namespace) -> int:
 def _cmd_rm(args: argparse.Namespace) -> int:
     from skillbank.manifest import DeploymentsManifest
 
+    _agents_cfg, machines = _load_configs()
+    machine = _resolve_machine(args, machines, destructive=True)
     manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
     recs = manifest.find(args.name)
     if not recs:
         print(f"[rm] skill {args.name!r} 无 manifest 部署记录(未同步过或已删), 无动作")
         return 0
-
-    machine = args.machine
     local_recs = [r for r in recs if r.machine == machine]
     remote_recs = [r for r in recs if r.machine != machine]
 
@@ -237,10 +264,7 @@ def _cmd_list(args: argparse.Namespace) -> int:
     from skillbank.sync import _iter_canonical_skills
 
     agents_cfg, machines = _load_configs()
-    machine = args.machine
-    if machine not in machines.machines:
-        print(f"[list] 未知机器 {machine!r}")
-        return 2
+    machine = _resolve_machine(args, machines)
     manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
     mcfg = machines.get_machine(machine)
     cols = [a for a in agents_cfg.agents if a in mcfg.agents]
@@ -367,17 +391,25 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         print(f"  ✗ 配置加载失败: {e}")
         return 1
 
-    machine = args.machine
-    if machine not in machines.machines:
-        errors.append(f"未知机器 {machine!r}")
+    machine = _resolve_machine(args, machines)
+    # 本机绑定状态(未绑定的命令默认值解析会拒绝执行, 提前在此提醒)
+    from skillbank.identity import read_binding
+    bound = read_binding(REPO_ROOT)
+    if bound is None:
+        warns.append("本机身份未绑定: 不带 --machine 的命令会拒绝执行"
+                     "(`skillbank use <别名>` 或 `skillbank scan --machine <别名>`)")
+    elif bound != machine:
+        warns.append(f"本机绑定 {bound!r} ≠ 本次查询机器 {machine!r}(显式指定)")
     else:
-        # 2. 该机器路径存在性
-        e_, w_ = machines.check_paths_exist(machine)
-        for x in e_:
-            errors.append(f"路径: {x}")
-        for x in w_:
-            warns.append(f"路径: {x}")
-        print(f"  ✓/✗ 路径检查: {len(e_)} errors, {len(w_)} warnings")
+        print(f"  ✓ 本机绑定: {bound}")
+
+    # 2. 该机器路径存在性
+    e_, w_ = machines.check_paths_exist(machine)
+    for x in e_:
+        errors.append(f"路径: {x}")
+    for x in w_:
+        warns.append(f"路径: {x}")
+    print(f"  ✓/✗ 路径检查: {len(e_)} errors, {len(w_)} warnings")
 
     # 3. manifest 一致性
     manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
@@ -419,7 +451,15 @@ def _cmd_scan(args: argparse.Namespace) -> int:
     from skillbank.scan import detect_agent, pick_best
 
     agents_cfg, machines = _load_configs()
-    machine = args.machine
+    # scan 与其它命令语义不同: 显式 --machine 是注册新别名的入口, 不校验已存在;
+    # 无 flag 时用已绑定身份, 未绑定则报错给指引(首次使用必须指明本机别名)。
+    from skillbank.identity import read_binding, write_binding
+
+    machine = args.machine or read_binding(REPO_ROOT)
+    if machine is None:
+        print("[scan] 本机身份未绑定且未指定 --machine — "
+              "首次在本机使用请: `skillbank scan --machine <别名>`(顺带注册进 machines.toml)")
+        return 2
     changes: dict[str, str] = {}
 
     print(f"[scan] 机器 {machine!r} — 探测本机 7 个 Agent 的 skills 目录\n")
@@ -466,11 +506,47 @@ def _cmd_scan(args: argparse.Namespace) -> int:
         return 0
     if not changes:
         print("\n[scan] 无变更, machines.toml 未动")
+        # 即使无变更也要绑定身份(跑 scan = 在本机使用, scan 只在本机跑)
+        print(f"[scan] 本机身份绑定 → {machine}({BINDING_NOTE})")
+        write_binding(REPO_ROOT, machine)
         return 0
     for agent, dir_path in changes.items():
         machines.set_skills_dir(machine, agent, dir_path)
     machines.save(REPO_ROOT / "machines.toml")
     print(f"\n[scan] machines.toml 已更新: {', '.join(changes)}")
+    print(f"[scan] 本机身份绑定 → {machine}({BINDING_NOTE})")
+    write_binding(REPO_ROOT, machine)
+    return 0
+
+
+# --- use(本机身份绑定)---
+
+
+def _cmd_use(args: argparse.Namespace) -> int:
+    """绑定/查看本机身份(machines.toml 里的机器别名)。
+
+    绑定后, 所有命令的 --machine 默认取绑定值;未绑定时依赖默认值的命令
+    会拒绝执行(防在别的机器上按 mac-main 名义误动本机文件)。
+    """
+    from skillbank.identity import read_binding, resolve_machine, write_binding
+
+    agents_cfg, machines = _load_configs()
+    if args.machine is None:
+        bound = read_binding(REPO_ROOT)
+        if bound is None:
+            print(f"[use] 本机未绑定。绑定: skillbank use <别名>"
+                  f"(machines.toml 可用: {sorted(machines.machines)})")
+            return 2
+        print(f"[use] 当前绑定: {bound}")
+        return 0
+    try:
+        machine = resolve_machine(REPO_ROOT, machines, args.machine)
+        p = write_binding(REPO_ROOT, machine)
+    except ValueError as e:
+        print(f"[use] ✗ {e}")
+        return 2
+    print(f"[use] 本机身份绑定 → {machine}")
+    print(f"  {p}(gitignored;下次 git pull 不受影响, 重 clone 需重新绑定)")
     return 0
 
 
@@ -526,6 +602,9 @@ def _cmd_archive(args: argparse.Namespace) -> int:
     from skillbank.archive import _archived_exists, _skill_exists, archive_skill
     from skillbank.manifest import DeploymentsManifest
 
+    _agents_cfg, machines = _load_configs()
+    machine = _resolve_machine(args, machines, destructive=True)
+
     if args.dry_run:
         # dry-run: 不动盘, 只报告会做什么
         if not _skill_exists(REPO_ROOT, args.name):
@@ -536,12 +615,12 @@ def _cmd_archive(args: argparse.Namespace) -> int:
         print(f"[archive] {args.name!r}: WOULD mv skills/{args.name}/ → skills/.archive/{args.name}/")
         manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
         recs = manifest.find(args.name)
-        print(f"  WOULD 清本机副本 {len([r for r in recs if r.machine == args.machine])} 个")
-        print(f"  WOULD 标其它机器 pending {len([r for r in recs if r.machine != args.machine])} 个")
+        print(f"  WOULD 清本机副本 {len([r for r in recs if r.machine == machine])} 个")
+        print(f"  WOULD 标其它机器 pending {len([r for r in recs if r.machine != machine])} 个")
         return 0
 
     manifest = DeploymentsManifest.load(REPO_ROOT / "manifests" / "deployments.json")
-    msg = archive_skill(REPO_ROOT, args.name, manifest=manifest, machine=args.machine)
+    msg = archive_skill(REPO_ROOT, args.name, manifest=manifest, machine=machine)
     print(f"[archive] {msg}")
     return 0
 
@@ -578,7 +657,7 @@ def _cmd_zcode_cleanup(args: argparse.Namespace) -> int:
     from datetime import datetime
 
     agents_cfg, machines = _load_configs()
-    machine = args.machine
+    machine = _resolve_machine(args, machines)
     zdir = machines.get_skills_dir(machine, "ZCode")
     if zdir is None or not zdir.exists():
         print(f"[zcode-cleanup] ZCode skills 目录未配置/不存在(machine={machine})")
@@ -647,7 +726,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("sync", help="Sync canonical skills -> agents x machine")
     sp.add_argument("-s", "--skill", action="append", dest="skills", help="skill name (repeatable)")
     sp.add_argument("-a", "--agent", action="append", dest="agents", help="agent (repeatable)")
-    sp.add_argument("--to", dest="machine", default="mac-main", help="machine alias (default mac-main)")
+    sp.add_argument("--to", dest="machine", default=None,
+                    help="machine alias(默认 = 本机绑定身份, 未绑定报错;`skillbank use` 绑定)")
     sp.add_argument("--dry-run", action="store_true", help="show plan, do not write")
     sp.add_argument("--yes", action="store_true", help="no interactive selection/confirm")
     sp.add_argument("--force", action="store_true",
@@ -658,7 +738,8 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("source", help="source path or git URL")
     sp.add_argument("--level", default="manual", choices=[l.value for l in Level])
     sp.add_argument("--force", action="store_true", help="覆盖已存在的 canonical")
-    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--machine", default=None,
+                    help="machine alias(默认 = 本机绑定身份)")
     sp.add_argument("--yes", action="store_true", help="重名冲突时自动用建议名(不交互)")
     sp.set_defaults(func=_cmd_add)
 
@@ -667,35 +748,42 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--level", default="manual", choices=[l.value for l in Level])
     sp.add_argument("--agent", help="来源 agent 名(不填按路径自动探测)")
     sp.add_argument("--force", action="store_true")
-    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--machine", default=None,
+                    help="machine alias(默认 = 本机绑定身份)")
     sp.add_argument("--yes", action="store_true", help="重名自动用建议名, 不交互")
     sp.set_defaults(func=_cmd_import)
 
     sp = sub.add_parser("rm", help="Remove a skill + clean deployed copies (canonical kept)")
     sp.add_argument("name", help="canonical skill name")
-    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--machine", default=None, help="machine alias(默认 = 本机绑定身份)")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=_cmd_rm)
 
     sp = sub.add_parser("list", help="Deployment state table (skill x agent)")
     sp.add_argument("--agent")
     sp.add_argument("--level", choices=["auto", "manual", "experimental", "disable"])
-    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--machine", default=None, help="machine alias(默认 = 本机绑定身份)")
     sp.set_defaults(func=_cmd_list)
 
     sp = sub.add_parser("doctor", help="Env check: configs / paths / manifest / canonical / git")
-    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--machine", default=None, help="machine alias(默认 = 本机绑定身份)")
     sp.add_argument("--skill", help="专项深查某 skill:body 引用 vs 资源镜像一致性(防 silent failure)")
     sp.set_defaults(func=_cmd_doctor)
 
-    sp = sub.add_parser("scan", help="探测本机 Agent skills 目录, 确认写入 machines.toml")
-    sp.add_argument("--machine", default="mac-main")
+    sp = sub.add_parser("use", help="绑定/查看本机身份(机器别名;--machine 默认取它)")
+    sp.add_argument("machine", nargs="?", default=None,
+                    help="machines.toml 里的机器别名;不填 = 查看当前绑定")
+    sp.set_defaults(func=_cmd_use)
+
+    sp = sub.add_parser("scan", help="探测本机 Agent skills 目录, 确认写入 machines.toml + 绑定本机身份")
+    sp.add_argument("--machine", default=None,
+                    help="本机别名(默认 = 已绑定身份;首次用此 flag 注册新机器)")
     sp.add_argument("--yes", action="store_true", help="非交互: 每项自动选最优候选")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=_cmd_scan)
 
     sp = sub.add_parser("zcode-cleanup", help="ZCode 真实副本 → 备份 + 软链 canonical(交互)")
-    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--machine", default=None, help="machine alias(默认 = 本机绑定身份)")
     sp.add_argument("--yes", action="store_true")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=_cmd_zcode_cleanup)
@@ -716,7 +804,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="归档 skill: mv canonical → skills/.archive/ + 清已部署副本(canonical 移走, 非删)",
     )
     sp.add_argument("name", help="canonical skill name")
-    sp.add_argument("--machine", default="mac-main")
+    sp.add_argument("--machine", default=None, help="machine alias(默认 = 本机绑定身份)")
     sp.add_argument("--dry-run", action="store_true")
     sp.set_defaults(func=_cmd_archive)
 

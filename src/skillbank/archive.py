@@ -40,7 +40,7 @@ def archive_skill(
     repo_root: Path,
     name: str,
     manifest: Optional[DeploymentsManifest] = None,
-    machine: str = "mac-main",
+    *, machine: str,
 ) -> str:
     """归档 skill: mv 到 .archive/ + 清已部署副本。
 
