@@ -1,4 +1,0 @@
-interface:
-  display_name: "思路码 (Go)"
-  short_description: "Project Go source into Chinese thought-code, no syntax noise"
-  default_prompt: "用 $thoughtcode-go 把这段 Go 翻译成思路码"

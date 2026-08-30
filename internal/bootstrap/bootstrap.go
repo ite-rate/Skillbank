@@ -94,9 +94,9 @@ func Clone(url, dest string) error {
 	return nil
 }
 
-// agentsTomlTemplate — init 脚手架用的 agents.toml 模板(与 repo 内版本等价,
-// 嵌进二进制 — init 场景下没有可拷的源文件)。
-const agentsTomlTemplate = `# Skillbank agents.toml — 7 个 Agent 的集成方式配置
+// agentsTomlTemplate — init 脚手架用的 agents.toml 模板(等价于中心仓的
+// agents.toml;导出供测试等需要影子 7 agent 配置的场景复用)。
+const AgentsTomlTemplate = `# Skillbank agents.toml — 7 个 Agent 的集成方式配置
 # emitter 读取本文件决定如何把 canonical SKILL.md 部署到各 Agent。
 # 全部 Agent 一律 cp 部署(7 个 emitter 均硬编码 cp)。
 
@@ -175,7 +175,7 @@ func InitRepo(dir string) ([]string, error) {
 	if err := mk("manifests/.gitkeep", ""); err != nil {
 		return nil, err
 	}
-	if err := mk("agents.toml", agentsTomlTemplate); err != nil {
+	if err := mk("agents.toml", AgentsTomlTemplate); err != nil {
 		return nil, err
 	}
 	if err := mk("machines.toml", machinesTomlTemplate); err != nil {

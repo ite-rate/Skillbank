@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ite-rate/skillbank/internal/bootstrap"
 	"github.com/ite-rate/skillbank/internal/config"
 	"github.com/ite-rate/skillbank/internal/emit"
 	sbir "github.com/ite-rate/skillbank/internal/ir"
@@ -22,20 +23,13 @@ import (
 
 func repoRoot(t *testing.T) string {
 	t.Helper()
-	dir, err := os.Getwd()
-	if err != nil {
+	// 工具仓不再自带 agents.toml — 影子 7 agent 配置写临时目录。
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "agents.toml"),
+		[]byte(bootstrap.AgentsTomlTemplate), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "agents.toml")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("找不到 repo 根(agents.toml)")
-		}
-		dir = parent
-	}
+	return dir
 }
 
 func writeCanonical(t *testing.T, repo, name string, body string,

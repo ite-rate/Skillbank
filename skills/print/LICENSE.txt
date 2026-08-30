@@ -1,9 +1,0 @@
-PROPRIETARY LICENSE - TELEAGENT PRINT SKILL
-
-Copyright (c) 2025 中电信人工智能科技（北京）有限公司
-
-All rights reserved. This skill and its associated scripts, documentation, and
-resources are proprietary software of TeleAI·Cowork. Unauthorized reproduction,
-distribution, modification, or use is strictly prohibited.
-
-For licensing inquiries, contact: TeleAI·TeleAgent Team

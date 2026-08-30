@@ -1,8 +1,0 @@
-interface:
-  display_name: "Broken YAML"
-  short_description: "This fixture contains invalid yaml"
-  default_prompt: "Use this fixture"
-compatibility:
-  canonical_format: "agent-skills"
-  adapter_targets:
-    - "openai

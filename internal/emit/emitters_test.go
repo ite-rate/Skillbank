@@ -18,6 +18,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ite-rate/skillbank/internal/bootstrap"
 	"github.com/ite-rate/skillbank/internal/config"
 	"github.com/ite-rate/skillbank/internal/emit"
 	"github.com/ite-rate/skillbank/internal/ir"
@@ -30,28 +31,14 @@ func parseCanonical(path string) (*ir.SkillIR, error) {
 	return parser.ParseCanonical(path)
 }
 
-// repoRoot — 从 cwd 向上找 agents.toml(测试跑在 internal/emit/ 下)。
-func repoRoot(t *testing.T) string {
-	t.Helper()
-	dir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "agents.toml")); err == nil {
-			return dir
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			t.Fatal("找不到 repo 根(agents.toml)")
-		}
-		dir = parent
-	}
-}
-
+// loadAgentsCfg — 影子 7 agent 配置(工具仓不再自带 agents.toml, 写临时文件加载)。
 func loadAgentsCfg(t *testing.T) *config.AgentsConfig {
 	t.Helper()
-	cfg, err := config.LoadAgents(filepath.Join(repoRoot(t), "agents.toml"))
+	p := filepath.Join(t.TempDir(), "agents.toml")
+	if err := os.WriteFile(p, []byte(bootstrap.AgentsTomlTemplate), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := config.LoadAgents(p)
 	if err != nil {
 		t.Fatal(err)
 	}

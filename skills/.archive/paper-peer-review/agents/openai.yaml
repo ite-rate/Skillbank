@@ -1,4 +1,0 @@
-interface:
-  display_name: "Paper Peer Review"
-  short_description: "Scientific paper review simulation"
-  default_prompt: "Use $paper-peer-review to simulate calibrated peer review, score weaknesses, and route revisions for a scientific paper."
