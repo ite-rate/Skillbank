@@ -1,0 +1,14 @@
+{
+  "check": "semantic",
+  "edit": {
+    "set_level": "auto"
+  },
+  "keep_lines": [
+    "description: \"Atelier (工作坊) — quoted description.\"",
+    "version: 1.2.0",
+    "level: auto"
+  ],
+  "drop_lines": [
+    "level: manual"
+  ]
+}

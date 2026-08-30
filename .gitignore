@@ -1,17 +1,5 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-.eggs/
-build/
+# Go 构建产物
 dist/
-*.whl
-
-# venv
-.venv/
-venv/
-env/
 
 # IDE / OS
 .DS_Store
@@ -25,8 +13,5 @@ env/
 *.log
 # 本机身份绑定(machines.toml 里的机器别名)— 每台机器各自绑定, 不跨机
 .skillbank-machine
-
-# pyproject build cache
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
+# skill 分发包内的二进制(make skill 从 dist/ 拷入, 不入库)
+skill/bin/

@@ -1,0 +1,8 @@
+# skillbank 用户级配置模板 — 拷到 ~/.config/skillbank/config.toml
+# (该文件是用户资产, 放 skill 目录外; 更新 skill 不会覆盖它)
+
+# 中心 skill 仓库的本地绝对路径(bootstrap 会自动写; 手填示例):
+# repo_path = "/home/you/Skillbank"
+
+# 中心仓库 git URL(bootstrap --repo-url 缺省时用它):
+# repo_url = "git@github.com:you/your-skillbank.git"
