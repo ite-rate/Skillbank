@@ -1,0 +1,31 @@
+# Release — 打 tag 上 GitHub Releases(二进制 + SHA256SUMS)。
+#
+# 先 make build 产物名 = install.sh 期待的 skillbank-<GOOS>-<GOARCH>。
+# permissions: contents: write 是 gh release create 的硬前提(默认 token 无写权)。
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: build
+        run: make build
+      - name: checksums
+        run: |
+          cd dist
+          sha256sum skillbank-* > SHA256SUMS
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes

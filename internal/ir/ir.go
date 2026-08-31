@@ -61,6 +61,7 @@ type SkillIR struct {
 	NameZH      *string  // 双语 name
 	Version     *string
 	License     *string
+	Source      *string // 来源 provenance(git URL); nil = 本地导入/未知
 	SourcePath  string    // parser 溯源
 	// 字段级透传: parser 保留 frontmatter 原始字节 + 原始 dict。
 	// FMRaw 为 nil(如 import 新建)时 emitter 走全量 dump。
@@ -100,13 +101,16 @@ func (ir *SkillIR) ToFrontmatterDict() map[string]any {
 	if ir.License != nil {
 		fm["license"] = *ir.License
 	}
+	if ir.Source != nil {
+		fm["source"] = *ir.Source
+	}
 	return fm
 }
 
 // CanonicalFieldOrder — canonical 字段产出序(新增字段 dump 追加序, 对应 Python dict 声明序)。
 var CanonicalFieldOrder = []string{
 	"name", "description", "level", "native_agent", "requires",
-	"description_zh", "name_zh", "version", "license",
+	"description_zh", "name_zh", "version", "license", "source",
 }
 
 // FromFrontmatterDict — 从 frontmatter dict + body bytes 构建 IR。
@@ -160,6 +164,9 @@ func FromFrontmatterDict(fm map[string]any, body []byte, sourcePath string,
 	}
 	if v, ok := fm["license"]; ok {
 		ir.License = strPtr(v)
+	}
+	if v, ok := fm["source"]; ok {
+		ir.Source = strPtr(v)
 	}
 	if fmRaw != nil {
 		ir.FMRaw = fmRaw

@@ -5,11 +5,10 @@
 ## 场景 A:已有中心仓(最常见)
 
 ```bash
-# 1. 装二进制(从 skill 包的 bin/ 选平台, 或自行构建)
-uname -sm                     # 确认平台
-chmod +x skillbank-<平台>
-# 建议 mv 进 PATH, 例如:
-sudo mv skillbank-<平台> /usr/local/bin/skillbank
+# 1. 装二进制(首选 install 脚本: 下载 + SHA256 校验 + 放 PATH)
+curl -fsSL https://raw.githubusercontent.com/ite-rate/Skillbank/main/scripts/install.sh | sh
+# 或手动: 到 https://github.com/ite-rate/Skillbank/releases 下载
+# skillbank-<os>-<arch>(按 uname -sm 选), chmod +x 后 mv 进 PATH。
 
 # 2. 一条龙(需要 git)
 skillbank bootstrap --repo-url <中心仓 git URL> --machine <本机别名> --yes

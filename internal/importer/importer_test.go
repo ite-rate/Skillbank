@@ -6,6 +6,7 @@ package importer_test
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -426,4 +427,156 @@ func anyWarn(ws []string, sub string) bool {
 		}
 	}
 	return false
+}
+
+// --- provenance source (v2.1) ---
+
+func TestImportWritesSourceFrontmatter(t *testing.T) {
+	home := t.TempDir()
+	src := mkAgentSkill(t, home, "sk", "canvas", []string{
+		"name: canvas", "description: Draw things",
+	}, "## body\n", nil)
+	repo := filepath.Join(home, "repo")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := importer.ImportSkill(src, repo, importer.Options{
+		Source: "https://github.com/example/skills",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Source != "https://github.com/example/skills" {
+		t.Fatalf("res.Source: %q", res.Source)
+	}
+	raw, err := os.ReadFile(filepath.Join(res.CanonicalDir, "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(raw), "source: https://github.com/example/skills") {
+		t.Fatalf("canonical 应含 source 行:\n%s", raw)
+	}
+	irOut, err := parser.ParseCanonical(filepath.Join(res.CanonicalDir, "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if irOut.Source == nil || *irOut.Source != "https://github.com/example/skills" {
+		t.Fatalf("IR Source: %v", irOut.Source)
+	}
+	// source 是 canonical 认识的字段 → 不落 overrides
+	entries, _ := os.ReadDir(filepath.Join(res.CanonicalDir, ".agent_overrides"))
+	if len(entries) != 0 {
+		t.Fatalf("source 不应进 overrides: %v", entries)
+	}
+}
+
+func TestImportLocalPathNoSource(t *testing.T) {
+	home := t.TempDir()
+	src := mkAgentSkill(t, home, "sk", "local-skill", []string{
+		"name: local-skill", "description: x",
+	}, "## body\n", nil)
+	repo := filepath.Join(home, "repo")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := importer.ImportSkill(src, repo, importer.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(filepath.Join(res.CanonicalDir, "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "source:") {
+		t.Fatalf("本地导入不应写 source(绝对路径跨机必断):\n%s", raw)
+	}
+}
+
+func TestImportKeepsExistingSourceField(t *testing.T) {
+	home := t.TempDir()
+	src := mkAgentSkill(t, home, "sk", "claimed", []string{
+		"name: claimed", "description: x",
+		"source: https://upstream.example/repo",
+	}, "## body\n", nil)
+	repo := filepath.Join(home, "repo")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	res, err := importer.ImportSkill(src, repo, importer.Options{
+		Source: "https://elsewhere.example/repo",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	irOut, err := parser.ParseCanonical(filepath.Join(res.CanonicalDir, "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if irOut.Source == nil || *irOut.Source != "https://upstream.example/repo" {
+		t.Fatalf("源里已声明的 source 应保留: %v", irOut.Source)
+	}
+	if !anyWarn(res.Warnings, "保留原值") {
+		t.Fatalf("应提示保留原值: %v", res.Warnings)
+	}
+}
+
+func TestImportGitURLSetsSourceAndCommit(t *testing.T) {
+	home := t.TempDir()
+	// 源: 单 skill 的本地 git 仓
+	srcRepo := filepath.Join(home, "skill-repo")
+	if err := os.MkdirAll(srcRepo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(srcRepo, "SKILL.md"),
+		[]byte("---\nname: git-skill\ndescription: From git\n---\n## body\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	git := func(args ...string) string {
+		t.Helper()
+		out, err := exec.Command("git", append([]string{"-C", srcRepo}, args...)...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+		return string(out)
+	}
+	git("init", "-q")
+	git("config", "user.email", "t@t")
+	git("config", "user.name", "t")
+	git("add", "-A")
+	git("commit", "-qm", "init")
+	wantCommit := strings.TrimSpace(git("rev-parse", "HEAD"))
+
+	repo := filepath.Join(home, "repo")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	results, err := importer.ImportGitURL(srcRepo, repo, importer.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("应导入 1 个 skill: %d", len(results))
+	}
+	res := results[0]
+	if res.Source != srcRepo {
+		t.Fatalf("res.Source: %q", res.Source)
+	}
+	if res.Commit != wantCommit || len(res.Commit) != 40 {
+		t.Fatalf("res.Commit: %q want %q", res.Commit, wantCommit)
+	}
+	irOut, err := parser.ParseCanonical(filepath.Join(res.CanonicalDir, "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if irOut.Source == nil || *irOut.Source != srcRepo {
+		t.Fatalf("canonical source: %v", irOut.Source)
+	}
+	// commit 只展示不持久化
+	raw, _ := os.ReadFile(filepath.Join(res.CanonicalDir, "SKILL.md"))
+	if strings.Contains(string(raw), wantCommit) {
+		t.Fatal("commit sha 不应写入 canonical")
+	}
 }

@@ -36,11 +36,9 @@ const (
 // deployCP — cp SKILL.md + resources/ 到 <deployRoot>/<name>/。
 func deployCP(e Emitter, in *ir.SkillIR, deployRoot string, cfg *config.AgentConfig,
 	canonicalSkillDir string) (EmitterResult, error) {
-	skillTargetDir := filepath.Join(deployRoot, in.Name)
-	// ZCode: 目标是旧软链/非目录文件 → 先删(从 ln 改 cp 的迁移)
-	if e.AgentName() == "ZCode" {
-		removeIfSymlinkOrNonDir(skillTargetDir)
-	}
+	skillTargetDir := TargetDir(e.AgentName(), in, deployRoot, cfg)
+	// 目标是旧软链/非目录文件 → 先删(分类层保证无记录目标到不了这里)
+	removeIfSymlinkOrNonDir(skillTargetDir)
 	if err := mkdirAll(skillTargetDir); err != nil {
 		return EmitterResult{}, err
 	}
@@ -351,7 +349,7 @@ func (e HermesEmitter) Deploy(in *ir.SkillIR, deployRoot string,
 	if category == "" {
 		category = "imported"
 	}
-	skillTargetDir := filepath.Join(deployRoot, category, in.Name)
+	skillTargetDir := TargetDir(e.AgentName(), in, deployRoot, cfg)
 	if err := mkdirAll(skillTargetDir); err != nil {
 		return EmitterResult{}, err
 	}

@@ -12,6 +12,7 @@
 // 计划项 kind:
 //
 //	deploy    将部署(cp/ln)
+//	unmanaged 目标已存在但本机无 manifest 记录, 阻断不覆盖(--force 收编; 软链即便 force 也阻断)
 //	deferred  目标是真实目录, 不动, 需 zcode-cleanup(保留兼容, 现不再产出)
 //	skip      不部署(原因见 detail: 未装 / Hermes 超限 / 被过滤)
 //	delete    本机清理(该 skill 的旧部署)
@@ -37,7 +38,7 @@ import (
 
 // PlanItem — 计划里的一条。
 type PlanItem struct {
-	Kind   string // deploy | deferred | skip | delete | pending | keep | warn
+	Kind   string // deploy | unmanaged | deferred | skip | delete | pending | keep | warn
 	Skill  string
 	Agent  string // 可空
 	Detail string
@@ -51,6 +52,71 @@ type SyncContext struct {
 	// DeployPairs — execute 阶段要 deploy 的 (skill, agent) 对
 	// (collect 时敲定, avoid 重算过滤逻辑)
 	DeployPairs [][2]string
+	// Force — execute 段纵深防御用(与 Collect 的 force 参数同源)。
+	Force bool
+}
+
+// --- 部署目标分类(拒绝覆盖非托管目录; safety.md「用户手放的 skill 原封不动」写路径化) ---
+
+// TargetVerdict — 已存在部署目标的形态。
+type TargetVerdict int
+
+const (
+	TargetAbsent TargetVerdict = iota
+	TargetSymlink
+	TargetNonDir
+	TargetEmptyDir
+	TargetRealDir
+)
+
+// ClassifyTarget — lstat + ReadDir 判部署目标形态(不存在 = TargetAbsent)。
+func ClassifyTarget(path string) TargetVerdict {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return TargetAbsent
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return TargetSymlink
+	}
+	if !info.IsDir() {
+		return TargetNonDir
+	}
+	if items, err := os.ReadDir(path); err == nil && len(items) == 0 {
+		return TargetEmptyDir
+	}
+	return TargetRealDir
+}
+
+// BlockReason — 部署前护栏; 返回非空 = 阻断原因(人话)。
+//
+//	recs        本机 (skill, machine, agent) 是否有记录
+//	hasAnyRecs  该 skill 在任意机器是否有记录(跨机提示用)
+//	force       --force 放行(软链除外: 写穿软链最坏污染 canonical, 任何情况下都不自动写)
+func BlockReason(path string, v TargetVerdict, hasLocalRecs, hasAnyRecs, force bool) string {
+	if v == TargetAbsent || v == TargetEmptyDir {
+		return "" // 无目标 / 空目录(零用户数据)
+	}
+	if hasLocalRecs {
+		return "" // 本机已托管: 正常重部署/keep
+	}
+	switch v {
+	case TargetSymlink:
+		return "目标是软链, 写穿会污染链目标; 请手动摘链后重试(--force 也不放行)"
+	case TargetNonDir:
+		if !force {
+			return "目标是普通文件(非目录); --force 收编"
+		}
+		return ""
+	case TargetRealDir:
+		if force {
+			return ""
+		}
+		if hasAnyRecs {
+			return "目标已存在非本机部署的同名 skill 目录, 阻断不覆盖; --force 收编"
+		}
+		return "目标已存在同名 skill 目录(非 skillbank 部署), 阻断不覆盖; --force 收编"
+	}
+	return ""
 }
 
 // --- 阶段 1: collect ---
@@ -90,7 +156,7 @@ func cleanupPlanForSkill(skill, machine string, m *manifest.DeploymentsManifest,
 func Collect(repoRoot, machine string, skillsFilter, agentsFilter []string,
 	machines *config.MachinesConfig, agentsCfg *config.AgentsConfig,
 	m *manifest.DeploymentsManifest, force bool) (*SyncContext, error) {
-	ctx := &SyncContext{IRs: map[string]*ir.SkillIR{}}
+	ctx := &SyncContext{IRs: map[string]*ir.SkillIR{}, Force: force}
 	mcfg, err := machines.GetMachine(machine)
 	if err != nil {
 		return nil, err
@@ -182,14 +248,24 @@ func Collect(repoRoot, machine string, skillsFilter, agentsFilter []string,
 				ctx.Plan = append(ctx.Plan, PlanItem{"skip", name, agent, "未选(过滤)"})
 				continue
 			}
-			detail := filepath.Join(deployRoot, name)
+			// 目标路径必须与 emitter 同源(Hermes 有 category 子目录, deployRoot/<name> 会查错)
+			target := emit.TargetDir(agent, in, deployRoot, agentsCfg.Get(agent))
 
 			kind := "deploy"
 			recs := m.Find(name, machine, agent)
 			if len(recs) > 0 && recs[0].IrHash == in.BodyHash() && !force {
 				kind = "keep"
 			}
-			ctx.Plan = append(ctx.Plan, PlanItem{kind, name, agent, detail})
+			// 拒绝覆盖非托管目标(软链恒阻断, 其余形态 --force 收编)
+			if kind == "deploy" {
+				if reason := BlockReason(target, ClassifyTarget(target),
+					len(recs) > 0, len(m.Find(name, "", "")) > 0, force); reason != "" {
+					ctx.Plan = append(ctx.Plan, PlanItem{"unmanaged", name, agent,
+						fmt.Sprintf("%s; %s", target, reason)})
+					continue
+				}
+			}
+			ctx.Plan = append(ctx.Plan, PlanItem{kind, name, agent, target})
 			// keep 项不进 DeployPairs:已对账(hash 相同), execute 跳过不重写、不刷 manifest。
 			// 资源自愈不是 keep 的职责(用户手动改部署端资源不会被纠正),需自愈用 --force/doctor。
 			// force 时强制走 deploy(让 frontmatter 字段级透传/overrides 合并等非 body 变更落地)。
@@ -213,11 +289,11 @@ func contains(list []string, s string) bool {
 // --- 阶段 2: show ---
 
 var kindMark = map[string]string{
-	"deploy": "+", "keep": "=", "deferred": "~", "skip": "-",
+	"deploy": "+", "unmanaged": "■", "keep": "=", "deferred": "~", "skip": "-",
 	"delete": "x", "pending": "p", "warn": "!",
 }
 
-var kindOrder = []string{"deploy", "keep", "deferred", "skip", "delete", "pending", "warn"}
+var kindOrder = []string{"deploy", "unmanaged", "keep", "deferred", "skip", "delete", "pending", "warn"}
 
 // ShowPlan — 人话展示计划(dry-run 到此为止)。
 func ShowPlan(ctx *SyncContext) {
@@ -311,6 +387,15 @@ func Execute(repoRoot, machine string, ctx *SyncContext,
 		in := ctx.IRs[name]
 		cfg := agentsCfg.Get(agent)
 		deployRoot := machines.GetSkillsDir(machine, agent)
+		// 纵深防御: 重算护栏, 防 Collect/Execute 漂移(如未来新加 DeployPairs 生产者)。
+		// Collect 已把阻断项从 DeployPairs 移除, 正常路径这里不会触发。
+		target := emit.TargetDir(agent, in, deployRoot, cfg)
+		if reason := BlockReason(target, ClassifyTarget(target),
+			len(m.Find(name, machine, agent)) > 0, len(m.Find(name, "", "")) > 0, ctx.Force); reason != "" {
+			fmt.Printf("  ⛔ %s → %s: 阻断(%s)\n", name, agent, reason)
+			failures++
+			continue
+		}
 		e, err := emit.GetEmitter(agent)
 		var result emit.EmitterResult
 		if err == nil {
@@ -369,6 +454,12 @@ func Execute(repoRoot, machine string, ctx *SyncContext,
 			return failures + 1
 		}
 		fmt.Printf("  manifest 已更新: %s\n", m.Path)
+	}
+	// unmanaged 阻断项计入失败(脚本需要感知:有用户资产未收编, 同步不完整)
+	for _, it := range ctx.Plan {
+		if it.Kind == "unmanaged" {
+			failures++
+		}
 	}
 	return failures
 }

@@ -6,16 +6,18 @@ level: auto
 
 # Skillbank — 中心 skill 仓库管家
 
-你有一个二进制工具 `skillbank`(在本 skill 的 bin/ 里),它把一个中心 git 仓库里的
+你有一个二进制工具 `skillbank`,它把一个中心 git 仓库里的
 canonical skill **字节零损耗地**同步到本机的各个 AI agent 目录(Claude Code、ZCode、
 QwenWorkCN、TeleAgent、Hermes、Codex、kimi-code),也能把散落在 agent 目录里的既有
 skill 反向收编进中心仓。
 
 ## 第一步:环境感知(每次会话开始先做)
 
-1. **找二进制**:优先系统 PATH 里的 `skillbank`;没有则用本 skill 目录下的
-   `bin/skillbank-<平台>`(darwin/linux × amd64/arm64,按 `uname -sm` 选),建议先
-   `chmod +x` 并建议用户把它放进 PATH。
+1. **找二进制**:优先系统 PATH 里的 `skillbank`;没有则一行装好
+   (`curl -fsSL https://raw.githubusercontent.com/ite-rate/Skillbank/main/scripts/install.sh | sh`,
+   从 GitHub Releases 下载并做 SHA256 校验),或到
+   `https://github.com/ite-rate/Skillbank/releases` 手动下载 `skillbank-<os>-<arch>`
+   (darwin/linux × amd64/arm64,按 `uname -sm` 选),`chmod +x` 后放进 PATH。
 2. **读用户配置**:`~/.config/skillbank/config.toml`(记 repo_path / repo_url)。
    `repo_path` 没配 → 问用户中心仓库地址(git URL 或本地路径),不要自己猜。
 3. `skillbank doctor` 一次,把 errors/warnings 人话汇报给用户。
@@ -25,6 +27,8 @@ skill 反向收编进中心仓。
 | 用户意图 | 命令 |
 |---|---|
 | 新机器/云服务器装环境 | `skillbank bootstrap --repo-url <url> --machine <别名> --yes`(clone→探测→绑定→sync 一条龙) |
+| 从 git 装 skill(导入+同步) | `skillbank install <git-url>`(一条龙, 只同步本次新导入) |
+| 日常更新(拉远端+同步+体检) | `skillbank pull` |
 | 把改动推到本机各 agent | `skillbank sync`(会展示计划;确认后执行) |
 | 收编某 agent 里的既有 skill | `skillbank import <skill 目录>` |
 | 从 git/本地路径加新 skill | `skillbank add <路径或 URL>` |
@@ -43,7 +47,9 @@ skill 反向收编进中心仓。
 ## 操作纪律
 
 - **所有会改盘的命令先跑 `--dry-run`**,把计划念给用户,确认后再真执行。
-  (`sync`/`rm`/`archive`/`zcode-cleanup`/`scan` 都有 `--dry-run`。)
+  (`sync`/`rm`/`archive`/`zcode-cleanup`/`scan`/`install`/`pull` 都有 `--dry-run`;
+  注意 install 的 dry-run 会真实导入中心仓、pull 的 dry-run 会真实 git pull ——
+  两者 dry-run ≠ 零副作用,见 commands.md。)
 - **`--machine` 不要乱填**:它是「本机在 machines.toml 里的别名」。不确定时先
   `skillbank use` 查看绑定,或让用户说清楚。跨机器的删除由 pending 机制在
   各机下次 sync 时自动执行,**绝不要在 A 机器上按 B 机器的名义操作**。

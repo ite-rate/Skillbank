@@ -24,9 +24,10 @@ func validLevel(s string) bool {
 	return false
 }
 
-// isGitURL — http(s):// / git@ / ssh:// 开头视为 git URL。
+// isGitURL — http(s):// / git@ / ssh:// / file:// 开头视为 git URL
+// (file:// = 本地 git 仓走 git clone 语义; 测试与环境受限场景用)。
 func isGitURL(src string) bool {
-	for _, p := range []string{"http://", "https://", "git@", "ssh://"} {
+	for _, p := range []string{"http://", "https://", "git@", "ssh://", "file://"} {
 		if strings.HasPrefix(src, p) {
 			return true
 		}

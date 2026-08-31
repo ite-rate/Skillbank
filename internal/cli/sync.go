@@ -14,6 +14,8 @@ func (a *App) cmdSync(args []string) int {
 	fs := newFlagSet("s", "skill", "a", "agent", "to", "dry-run", "yes", "force")
 	skillsFilter := fs.sliceP("skill")
 	agentsFilter := fs.sliceP("agent")
+	fs.strSlice["s"] = skillsFilter // -s 别名(同槽指针; 不绑会 panic)
+	fs.strSlice["a"] = agentsFilter // -a 别名
 	machineFlag := fs.strP("to", "")
 	dryRun := fs.boolP("dry-run")
 	yes := fs.boolP("yes")

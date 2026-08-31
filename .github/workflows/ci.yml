@@ -1,0 +1,27 @@
+# CI —vet + 全量测试 + install.sh 语法检查。(每 push/PR 都跑)
+#
+# Go 版本与 go.mod 对齐(1.25)。install.sh 在 WP7 落地;sh -n 只查语法不执行。
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test ./...
+      - name: install.sh 语法
+        run: sh -n scripts/install.sh

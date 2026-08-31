@@ -127,6 +127,7 @@ func TestFullFieldSetRoundtripIdentical(t *testing.T) {
 		"name_zh: 创意\n" +
 		"version: 1.0.0\n" +
 		"license: MIT\n" +
+		"source: https://github.com/example/skills\n" +
 		"---\n" +
 		"\n## Step 1\n\nDo thing.\n\n```python\nprint('hi')\n```\n")
 	ir0, ir1 := roundtrip(t, original)
@@ -156,6 +157,9 @@ func TestFullFieldSetRoundtripIdentical(t *testing.T) {
 	if ir0.License == nil || *ir0.License != "MIT" {
 		t.Fatalf("license: %v", ir0.License)
 	}
+	if ir0.Source == nil || *ir0.Source != "https://github.com/example/skills" {
+		t.Fatalf("source: %v", ir0.Source)
+	}
 
 	assertBodyIdentical(t, ir0, ir1)
 
@@ -166,7 +170,7 @@ func TestFullFieldSetRoundtripIdentical(t *testing.T) {
 	if ir1.Requires == nil || len(ir1.Requires) != 2 {
 		t.Fatalf("requires 往返丢失: %v", ir1.Requires)
 	}
-	if ir1.DescZH == nil || ir1.NameZH == nil || ir1.Version == nil || ir1.License == nil {
+	if ir1.DescZH == nil || ir1.NameZH == nil || ir1.Version == nil || ir1.License == nil || ir1.Source == nil {
 		t.Fatal("可选字段往返丢失")
 	}
 }

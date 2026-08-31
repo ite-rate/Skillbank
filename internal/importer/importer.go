@@ -122,7 +122,7 @@ func stripFMBody(skillMDPath string) []byte {
 var canonicalKnownFields = map[string]bool{
 	"name": true, "description": true, "level": true, "native_agent": true,
 	"requires": true, "description_zh": true, "name_zh": true,
-	"version": true, "license": true,
+	"version": true, "license": true, "source": true,
 }
 
 // DetectSourceAgent — 源目录在哪个 Agent 的 skills_dir 下 → 那个 Agent 名。
@@ -151,6 +151,8 @@ func DetectSourceAgent(srcDir string, machines *config.MachinesConfig, machine s
 type ImportResult struct {
 	CanonicalDir string
 	Warnings     []string
+	Source       string // 写进 canonical source 的来源(git URL; 本地导入为空)
+	Commit       string // git 导入时的源 commit(仅展示用, 不持久化)
 }
 
 // Options — import_skill 参数(Python 关键字参数的具名化)。
@@ -164,6 +166,9 @@ type Options struct {
 	// DisableAutoRename 关掉自动改名(默认自动改名, 对齐 Python auto_rename=True);
 	// 关掉后不同 body 重名且无 callback → 报错(防自动覆盖)。
 	DisableAutoRename bool
+	// Source — git URL 来源, 写进 canonical frontmatter source。
+	// 空 = 本地路径导入, 不写(绝对路径跨机必断)。
+	Source string
 }
 
 // ImportSkill — 导入一个 skill 目录(须含 SKILL.md)→ skills/<name>/。
@@ -249,6 +254,16 @@ func ImportSkill(srcDir, repoRoot string, opts Options) (ImportResult, error) {
 		}
 	}
 
+	// provenance source: 源 frontmatter 已声明的优先(不覆盖); 否则用 opts.Source(git URL)
+	src := opts.Source
+	var sourceWarn string
+	if existing, ok := fm["source"].(string); ok && existing != "" {
+		if src != "" && existing != src {
+			sourceWarn = fmt.Sprintf("源 SKILL.md 已有 source=%q, 保留原值", existing)
+		}
+		src = existing
+	}
+
 	in := &ir.SkillIR{
 		Name:        irName,
 		Description: description,
@@ -259,6 +274,7 @@ func ImportSkill(srcDir, repoRoot string, opts Options) (ImportResult, error) {
 		NameZH:      strPtrOrNil(nameZH),
 		Version:     versionPtr(fm, "version"),
 		License:     versionPtr(fm, "license"),
+		Source:      strPtrOrNil(src),
 	}
 
 	if _, err := os.Stat(dst); err == nil && opts.Force {
@@ -306,7 +322,11 @@ func ImportSkill(srcDir, repoRoot string, opts Options) (ImportResult, error) {
 		}
 	}
 
-	return ImportResult{CanonicalDir: dst, Warnings: ScanBodyPaths(body)}, nil
+	warnings := ScanBodyPaths(body)
+	if sourceWarn != "" {
+		warnings = append(warnings, sourceWarn)
+	}
+	return ImportResult{CanonicalDir: dst, Warnings: warnings, Source: opts.Source}, nil
 }
 
 func srcDirName(srcDir string) string {
@@ -533,6 +553,13 @@ func ImportGitURL(url, repoRoot string, opts Options) ([]ImportResult, error) {
 		}
 		return nil, fmt.Errorf("git clone 失败: %s", strings.TrimSpace(msg))
 	}
+	// provenance: 抓源 commit(失败容忍, 仅展示用); opts.Source 供 ImportSkill 写 canonical
+	commit := ""
+	if out, err := exec.Command("git", "-C", tmp, "rev-parse", "HEAD").Output(); err == nil {
+		commit = strings.TrimSpace(string(out))
+	}
+	opts.Source = url
+
 	var cands []string
 	if _, err := os.Stat(filepath.Join(tmp, "SKILL.md")); err == nil {
 		cands = []string{tmp}
@@ -557,6 +584,7 @@ func ImportGitURL(url, repoRoot string, opts Options) ([]ImportResult, error) {
 		if err != nil {
 			return results, err
 		}
+		res.Commit = commit
 		results = append(results, res)
 	}
 	return results, nil

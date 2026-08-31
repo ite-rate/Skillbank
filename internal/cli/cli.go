@@ -267,8 +267,8 @@ func (fs *flagSet) parse(args []string) (string, bool) {
 }
 
 const usageHeader = "Skillbank: 中心 skill 仓库 → 7 个 AI agent(body 字节零损耗)\n\n子命令:\n" +
-	"  sync / use / add / import / rm / list / doctor / scan / zcode-cleanup\n" +
-	"  set-level / archive / unarchive / archive-list / init / bootstrap\n"
+	"  sync / use / add / import / install / rm / list / doctor / scan / zcode-cleanup\n" +
+	"  set-level / archive / unarchive / archive-list / init / bootstrap / pull\n"
 
 // Run — 分发子命令, 返回进程 exit code。
 func (a *App) Run(args []string) int {
@@ -284,6 +284,10 @@ func (a *App) Run(args []string) int {
 		return a.cmdAdd(rest)
 	case "import":
 		return a.cmdImport(rest)
+	case "install":
+		return a.cmdInstall(rest)
+	case "pull":
+		return a.cmdPull(rest)
 	case "rm":
 		return a.cmdRm(rest)
 	case "list":

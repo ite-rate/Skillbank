@@ -1,8 +1,8 @@
-# Skillbank Makefile — Go 静态二进制 + skill 分发包组装
+# Skillbank Makefile — Go 静态二进制 + skill 分发包
 #
 #   make test    全量 Go 测试
 #   make build   四平台交叉编译 → dist/skillbank-<os>-<arch>(真静态, 无 cgo)
-#   make skill   组装 skill/ 分发包(拷 dist/ 二进制进 skill/bin/)
+#   make skill   校验 skill/ 分发包(二进制已移居 GitHub Releases, 走 scripts/install.sh)
 
 BINARY   := skillbank
 VERSION  ?= 2.0.0
@@ -26,22 +26,15 @@ build:
 	done
 	@ls -lh $(DIST)
 
-# 组装 skill 分发包: SKILL.md + reference/ + config 模板 + 四平台二进制
-skill: build
-	@mkdir -p skill/bin
-	@for plat in $(PLATFORMS); do \
-		os=$${plat%/*}; arch=$${plat#*/}; \
-		case $$os-$$arch in \
-			darwin-arm64)  suffix=mac-arm64 ;; \
-			darwin-amd64)  suffix=mac-amd64 ;; \
-			linux-amd64)   suffix=linux-amd64 ;; \
-			linux-arm64)   suffix=linux-arm64 ;; \
-		esac; \
-		cp $(DIST)/$(BINARY)-$$os-$$arch skill/bin/skillbank-$$suffix; \
-	done
-	@chmod +x skill/bin/skillbank-*
-	@echo "skill/ 分发包已组装:"
+# 校验 skill 分发包: SKILL.md + reference/ + config 模板(v2.1 起二进制不入库,
+# 安装走 scripts/install.sh 拉 GitHub Releases)
+skill:
+	@test -f skill/SKILL.md || (echo "✗ 缺 skill/SKILL.md"; exit 1)
+	@test -d skill/reference || (echo "✗ 缺 skill/reference/"; exit 1)
+	@sh -n scripts/install.sh
+	@echo "skill/ 分发包内容:"
 	@find skill -type f | sort
+	@echo "(二进制安装: scripts/install.sh 或 GitHub Releases 手动下载)"
 
 clean:
 	rm -rf $(DIST)

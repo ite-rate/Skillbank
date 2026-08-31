@@ -31,6 +31,7 @@ skill 一律平铺在 `skills/<name>/`,不搞分类子目录 — 找 skill 靠�
 | `requires` | 能力依赖清单(如 image_generation) |
 | `description_zh` / `name_zh` | 中文案(QwenWorkCN 直传, TeleAgent 由 _cn 映射) |
 | `version` / `license` | 元数据 |
+| `source` | 来源 provenance(git URL);本地导入不写;字段顺序在 license 之后 |
 
 其它字段(如市场来源的 `install_source`/`skill_id`)不进 canonical,由 import
 自动落到 `.agent_overrides/`。

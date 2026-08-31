@@ -1,5 +1,7 @@
 # Skillbank
 
+[![ci](https://github.com/ite-rate/Skillbank/actions/workflows/ci.yml/badge.svg)](https://github.com/ite-rate/Skillbank/actions/workflows/ci.yml)
+
 > 把一份 canonical `SKILL.md` 资产库,字节零损耗地同步到本机全部 7 个桌面 AI Agent。
 > **body byte-identical, no loss** — frontmatter 字段级透传, 引号/顺序/空行不漂移。
 > 跨机同步 = git 本身(`A 机改 → push → B 机 pull → sync`)。
@@ -28,6 +30,14 @@ skill **资产**归你的中心仓,private git 托管,可换机器可协作;工�
 
 ## 上手三选一
 
+先装二进制(macOS/Linux):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ite-rate/Skillbank/main/scripts/install.sh | sh
+# = GitHub Releases 下载 skillbank-<os>-<arch> + SHA256 校验 + 放进 PATH
+# Windows: 自行 go build ./cmd/skillbank
+```
+
 **A. 已有中心仓 → 一条龙装机**(新机器/云服务器):
 
 ```sh
@@ -48,7 +58,9 @@ git add -A && git commit -m "init" && git push    # 推到你自己的私有 git
 
 **C. 装成 skill,让 agent 来操作**(kimi-slides 形态):
 
-本仓 clone 下来后 `skill/` 目录即是分发包(`skill/bin/` 里带 4 平台静态二进制):
+本仓 clone 下来后 `skill/` 目录即是分发包(SKILL.md + reference + config 模板;
+二进制不再入库,装它用 [`scripts/install.sh`](scripts/install.sh) 从 GitHub Releases
+拉取并做 SHA256 校验):
 
 ```sh
 cp -R skill ~/.claude/skills/skillbank
@@ -147,9 +159,9 @@ skillbank init / bootstrap / zcode-cleanup
 ## 开发
 
 ```sh
-make test      # go test ./...  (139 tests)
+make test      # go test ./...
 make build     # 4 平台交叉编译 → dist/  (darwin/linux × amd64/arm64, CGO_ENABLED=0)
-make skill     # 把 dist/ 二进制拷进 skill/bin/ 组装分发包
+make skill     # 校验 skill/ 分发包(二进制走 GitHub Releases, 不再拷进 skill/bin/)
 ```
 
 结构:`cmd/skillbank`(入口)+ `internal/{ir,parser,emit,config,identity,manifest,
@@ -161,6 +173,9 @@ sync,scan,importer,archive,refs,interactive,cli,bootstrap}`。
 
 ## 已知限制
 
+- **路径探测以 macOS 实测为准**:7 个 Agent 的候选路径(`internal/scan`)与
+  `agents.toml` 模板皆来自 Mac 真机实测。其余平台(Linux/Windows)未逐一验证:
+  先跑 `skillbank doctor` 确认路径,或手编 `machines.toml`。
 - **kimi-code 无 frontmatter 禁触发字段**:`manual`/`experimental` 部署到 kimi 时
   sync 输出 ⚠,该端模型仍可能自动触发,靠 description 话术控制
 - **Hermes 超 100k 字符 skill**:跳过 Hermes 端该 skill,其它 agent 正常(body 零损耗不破)

@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -303,5 +304,341 @@ func TestCliScanRegistersNewAliasEvenWithNoAgents(t *testing.T) {
 	out = capture(t, func() { rc = run(a, "use") })
 	if rc != 0 || !strings.Contains(out, "fresh-laptop") {
 		t.Fatalf("use 应显示绑定: rc=%d\n%s", rc, out)
+	}
+}
+
+// --- install 一条龙(v2.1) ---
+
+// mkGitSkillRepo — 一个含单 skill 的本地 git 仓, 返回 file:// URL。
+func mkGitSkillRepo(t *testing.T, base string) string {
+	t.Helper()
+	src := filepath.Join(base, "skill-src")
+	if err := os.MkdirAll(src, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(src, "SKILL.md"),
+		[]byte("---\nname: git-skill\ndescription: From git via install\n---\n## body\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	git := func(args ...string) {
+		t.Helper()
+		out, err := exec.Command("git", append([]string{"-C", src}, args...)...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	git("init", "-q", "-b", "main")
+	git("config", "user.email", "t@t")
+	git("config", "user.name", "t")
+	git("add", "-A")
+	git("commit", "-qm", "init")
+	return "file://" + src
+}
+
+func TestCliInstallImportsAndSyncsOnlyNewSkill(t *testing.T) {
+	repo := fakeRepo(t)
+	tmp := t.TempDir()
+	cc := filepath.Join(tmp, "claude", "skills")
+	if err := os.MkdirAll(cc, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "machines.toml"),
+		[]byte("[machines.m1]\ndisplay_name = \"m1\"\n\n"+
+			"[machines.m1.agents.ClaudeCode]\nskills_dir = \""+cc+"\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// 预置一个既有 canonical skill(不应被 install 顺带部署)
+	existing := filepath.Join(repo, "skills", "already-there")
+	if err := os.MkdirAll(existing, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	irIn := &sbir.SkillIR{Name: "already-there", Description: "pre-existing",
+		Body: []byte("## pre\n"), Level: sbir.Auto, Requires: []string{}}
+	if err := emit.EmitCanonical(irIn, filepath.Join(existing, "SKILL.md")); err != nil {
+		t.Fatal(err)
+	}
+
+	url := mkGitSkillRepo(t, tmp)
+	a := &cli.App{RepoRoot: repo, In: bufio.NewReader(strings.NewReader(""))}
+
+	rc := run(a, "install", url, "--machine", "m1", "--yes")
+	if rc != 0 {
+		t.Fatalf("install rc=%d", rc)
+	}
+	// canonical 已带 source
+	raw, err := os.ReadFile(filepath.Join(repo, "skills", "git-skill", "SKILL.md"))
+	if err != nil {
+		t.Fatalf("导入应完成: %v", err)
+	}
+	if !strings.Contains(string(raw), "source: file://") {
+		t.Fatalf("canonical 应含 source:\n%s", raw)
+	}
+	// 只有新 skill 被部署
+	if _, err := os.Stat(filepath.Join(cc, "git-skill", "SKILL.md")); err != nil {
+		t.Fatal("新 skill 应被部署到 agent 目录")
+	}
+	if _, err := os.Stat(filepath.Join(cc, "already-there")); err == nil {
+		t.Fatal("既有 canonical 不应被 install 顺带部署")
+	}
+}
+
+func TestCliInstallRejectsLocalPath(t *testing.T) {
+	repo := fakeRepo(t)
+	a := &cli.App{RepoRoot: repo, In: bufio.NewReader(strings.NewReader(""))}
+	var rc int
+	_ = capture(t, func() { rc = run(a, "install", "/some/local/dir") }) // 报错走 stderr
+	if rc != 2 {
+		t.Fatalf("本地路径应 exit 2, got %d", rc)
+	}
+}
+
+func TestCliInstallMachineUnresolvedStillImports(t *testing.T) {
+	// machines.toml 未配置 → 导入照做, 提示先 scan, exit 0
+	repo := fakeRepo(t)
+	tmp := t.TempDir()
+	url := mkGitSkillRepo(t, tmp)
+	a := &cli.App{RepoRoot: repo, In: bufio.NewReader(strings.NewReader(""))}
+
+	var rc int
+	out := capture(t, func() { rc = run(a, "install", url, "--yes") })
+	if rc != 0 {
+		t.Fatalf("导入成功但机器未解析应 exit 0, got %d:\n%s", rc, out)
+	}
+	if _, err := os.Stat(filepath.Join(repo, "skills", "git-skill", "SKILL.md")); err != nil {
+		t.Fatalf("导入应已完成: %v", err)
+	}
+	if !strings.Contains(out, "未同步") {
+		t.Fatalf("应提示未同步原因:\n%s", out)
+	}
+}
+
+// --- pull 一键日常动线(v2.1) ---
+
+// mkGitCenterRepo — fakeRepo 基础上 git init + 全部提交(中心仓 git 形态)。
+func mkGitCenterRepo(t *testing.T, dir string) {
+	t.Helper()
+	git := func(args ...string) {
+		t.Helper()
+		out, err := exec.Command("git", append([]string{"-C", dir}, args...)...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	git("init", "-q", "-b", "main")
+	git("config", "user.email", "t@t")
+	git("config", "user.name", "t")
+	git("add", "-A")
+	git("commit", "-qm", "init")
+}
+
+// mkGitCenterRepoCommits — 后续改动(改 machines.toml 等)再提交一次。
+func mkGitCenterRepoCommits(t *testing.T, dir string) {
+	t.Helper()
+	git := []string{"-C", dir}
+	for _, args := range [][]string{{"add", "-A"}, {"commit", "-qm", "update"}} {
+		if out, err := exec.Command("git", append(git, args...)...).CombinedOutput(); err != nil {
+			if !strings.Contains(strings.ToLower(string(out)), "nothing to commit") {
+				t.Fatalf("git %v: %v\n%s", args, err, out)
+			}
+		}
+	}
+}
+
+func TestCliPullDryRunNoRemoteSkipsPullGracefully(t *testing.T) {
+	repo := fakeRepo(t)
+	mkGitCenterRepo(t, repo) // 无 remote: skillbank init 形态
+	tmp := t.TempDir()
+	cc := filepath.Join(tmp, "claude", "skills")
+	if err := os.MkdirAll(cc, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "machines.toml"),
+		[]byte("[machines.m1]\ndisplay_name = \"m1\"\n\n"+
+			"[machines.m1.agents.ClaudeCode]\nskills_dir = \""+cc+"\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a := &cli.App{RepoRoot: repo, In: bufio.NewReader(strings.NewReader(""))}
+	if rc := run(a, "use", "m1"); rc != 0 {
+		t.Fatalf("use rc=%d", rc)
+	}
+	d := filepath.Join(repo, "skills", "demo")
+	if err := os.MkdirAll(d, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := emit.EmitCanonical(&sbir.SkillIR{Name: "demo", Description: "d",
+		Body: []byte("## b\n"), Level: sbir.Auto, Requires: []string{}},
+		filepath.Join(d, "SKILL.md")); err != nil {
+		t.Fatal(err)
+	}
+
+	var rc int
+	out := capture(t, func() { rc = run(a, "pull", "--dry-run") })
+	if rc != 0 {
+		t.Fatalf("pull --dry-run rc=%d\n%s", rc, out)
+	}
+	if !strings.Contains(out, "跳过 pull") {
+		t.Fatalf("无 remote 应跳过 pull:\n%s", out)
+	}
+	if _, err := os.Stat(filepath.Join(cc, "demo")); err == nil {
+		t.Fatal("dry-run 不应部署")
+	}
+}
+
+func TestCliPullAbortsOnDirtyTree(t *testing.T) {
+	repo := fakeRepo(t)
+	mkGitCenterRepo(t, repo)
+	if err := os.WriteFile(filepath.Join(repo, "dirty.md"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	src := filepath.Join(t.TempDir(), "origin")
+	if out, err := exec.Command("git", "init", "-q", "--bare", "-b", "main", src).CombinedOutput(); err != nil {
+		t.Fatalf("git init --bare: %v %s", err, out)
+	}
+	if out, err := exec.Command("git", "-C", repo, "remote", "add", "origin", src).
+		CombinedOutput(); err != nil {
+		t.Fatalf("git remote add: %v %s", err, out)
+	}
+
+	a := &cli.App{RepoRoot: repo, In: bufio.NewReader(strings.NewReader(""))}
+	if rc := run(a, "use", "m1"); rc != 0 {
+		t.Fatalf("use rc=%d", rc)
+	}
+	var rc int
+	out := capture(t, func() { rc = run(a, "pull", "--yes") })
+	if rc != 1 {
+		t.Fatalf("脏工作区应 exit 1, got %d\n%s", rc, out)
+	}
+	if !strings.Contains(out, "未提交改动") {
+		t.Fatalf("应说明中止原因:\n%s", out)
+	}
+}
+
+func TestCliPullFastForward(t *testing.T) {
+	// 双 clone: A 推新 skill → B pull 拉到并部署到本机 agent 目录。
+	origin := filepath.Join(t.TempDir(), "origin")
+	if out, err := exec.Command("git", "init", "-q", "--bare", "-b", "main", origin).CombinedOutput(); err != nil {
+		t.Fatalf("git init --bare: %v %s", err, out)
+	}
+	repoB := fakeRepo(t)
+	mkGitCenterRepo(t, repoB)
+	if out, err := exec.Command("git", "-C", repoB, "remote", "add", "origin", origin).
+		CombinedOutput(); err != nil {
+		t.Fatalf("git remote add: %v %s", err, out)
+	}
+	if out, err := exec.Command("git", "-C", repoB, "push", "-q", "-u", origin, "main").
+		CombinedOutput(); err != nil {
+		t.Fatalf("git push -u: %v %s", err, out)
+	}
+	tmp := t.TempDir()
+	ccB := filepath.Join(tmp, "claude", "skills")
+	if err := os.MkdirAll(ccB, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repoB, "machines.toml"),
+		[]byte("[machines.m1]\ndisplay_name = \"m1\"\n\n"+
+			"[machines.m1.agents.ClaudeCode]\nskills_dir = \""+ccB+"\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	a := &cli.App{RepoRoot: repoB, In: bufio.NewReader(strings.NewReader(""))}
+	if rc := run(a, "use", "m1"); rc != 0 {
+		t.Fatalf("use rc=%d", rc)
+	}
+	// B 提交自己的 machines.toml 改动(否则 pull 被自己的脏树中止 —— 预期语义)
+	// 并推上去; 不推的话 origin 与 B 就真分叉了(pull --ff-only 拒绝非祖先)
+	mkGitCenterRepoCommits(t, repoB)
+	if out, err := exec.Command("git", "-C", repoB, "push", "-q", "origin", "main").
+		CombinedOutput(); err != nil {
+		t.Fatalf("git push B: %v %s", err, out)
+	}
+
+	// A: clone origin → 加 skill → push
+	repoA := filepath.Join(t.TempDir(), "repoA")
+	if out, err := exec.Command("git", "clone", "-q", origin, repoA).CombinedOutput(); err != nil {
+		t.Fatalf("git clone A: %v %s", err, out)
+	}
+	for _, f := range []string{"agents.toml", "machines.toml"} {
+		b, err := os.ReadFile(filepath.Join(repoB, f))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(repoA, f), b, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := filepath.Join(repoA, "skills", "new-skill")
+	if err := os.MkdirAll(d, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(d, "SKILL.md"),
+		[]byte("---\nname: new-skill\ndescription: Fresh from A\n---\n## body\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gitA := func(args ...string) {
+		t.Helper()
+		out, err := exec.Command("git", append([]string{"-C", repoA}, args...)...).CombinedOutput()
+		if err != nil {
+			t.Fatalf("git(A) %v: %v\n%s", args, err, out)
+		}
+	}
+	gitA("config", "user.email", "a@t")
+	gitA("config", "user.name", "a")
+	gitA("add", "-A")
+	gitA("commit", "-qm", "add new-skill")
+	if out, err := exec.Command("git", "-C", repoA, "push", "-q", origin, "main").
+		CombinedOutput(); err != nil {
+		t.Fatalf("git push A: %v %s", err, out)
+	}
+
+	rc := run(a, "pull", "--yes", "--no-doctor")
+	if rc != 0 {
+		t.Fatalf("pull rc=%d", rc)
+	}
+	if _, err := os.Stat(filepath.Join(repoB, "skills", "new-skill", "SKILL.md")); err != nil {
+		t.Fatalf("pull 应拉到 new-skill: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(ccB, "new-skill", "SKILL.md")); err != nil {
+		t.Fatal("pull --yes 应链式部署到 agent 目录")
+	}
+}
+
+// --- 回归: -s/-a 别名曾只注册未绑定指针, `sync -s <名>` 直接 SIGSEGV(v2.0 起潜伏) ---
+
+func TestCliSyncShortFlagAliasesNoPanic(t *testing.T) {
+	repo := fakeRepo(t)
+	tmp := t.TempDir()
+	cc := filepath.Join(tmp, "claude", "skills")
+	if err := os.MkdirAll(cc, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repo, "machines.toml"),
+		[]byte("[machines.m1]\ndisplay_name = \"m1\"\n\n"+
+			"[machines.m1.agents.ClaudeCode]\nskills_dir = \""+cc+"\"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, n := range []string{"demo", "other"} {
+		d := filepath.Join(repo, "skills", n)
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := emit.EmitCanonical(&sbir.SkillIR{Name: n, Description: "d",
+			Body: []byte("## b\n"), Level: sbir.Auto, Requires: []string{}},
+			filepath.Join(d, "SKILL.md")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	a := &cli.App{RepoRoot: repo, In: bufio.NewReader(strings.NewReader(""))}
+	if rc := run(a, "use", "m1"); rc != 0 {
+		t.Fatalf("use rc=%d", rc)
+	}
+	var rc int
+	out := capture(t, func() { rc = run(a, "sync", "-s", "demo", "--dry-run", "--yes") })
+	if rc != 0 {
+		t.Fatalf("'-s demo' 应正常解析(回归: 曾 panic), rc=%d\n%s", rc, out)
+	}
+	if !strings.Contains(out, "demo") {
+		t.Fatalf("计划应含 demo:\n%s", out)
+	}
+	if strings.Contains(out, "other") {
+		t.Fatalf("-s demo 不应带出 other:\n%s", out)
 	}
 }

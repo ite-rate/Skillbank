@@ -500,7 +500,10 @@ func mkdirAll(path string) error {
 	return os.MkdirAll(path, 0o755)
 }
 
-// removeIfSymlinkOrNonDir — 目标是软链或非目录文件 → 删(ZCode 从 ln 改 cp 的迁移)。
+// removeIfSymlinkOrNonDir — 目标是软链或非目录文件 → 删(全部 emitter 的部署前置)。
+// 旧语义仅 ZCode(从 ln 改 cp 的迁移); v2.1 起通用化: sync 分类层保证无记录的软链/
+// 非目录根本到不了部署, 能走到这里的只有「已收编(有 manifest 记录)」或「--force 放行的
+// 非目录」, 摘链/删文件是安全的。真实目录 no-op(镜像写入, 不删)。
 func removeIfSymlinkOrNonDir(path string) {
 	info, err := os.Lstat(path)
 	if err != nil {
@@ -509,6 +512,19 @@ func removeIfSymlinkOrNonDir(path string) {
 	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
 		_ = os.Remove(path)
 	}
+}
+
+// TargetDir — emitter 实际落盘目录的唯一真源(Hermes 有 category 子目录; 其余 =
+// deployRoot/<name>)。sync.Collect 的目标分类必须用同一份真源, 否则对 Hermes 查错目录。
+func TargetDir(agentName string, in *ir.SkillIR, deployRoot string, cfg *config.AgentConfig) string {
+	if agentName == "Hermes" {
+		category := cfg.DefaultCategory
+		if category == "" {
+			category = "imported"
+		}
+		return filepath.Join(deployRoot, category, in.Name)
+	}
+	return filepath.Join(deployRoot, in.Name)
 }
 
 // WriteResources — canonical skill 目录完整结构保真同步到目标

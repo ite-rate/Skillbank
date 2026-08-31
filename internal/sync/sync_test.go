@@ -352,11 +352,12 @@ func TestSyncHermesOversizeSkippedAndStaleCleaned(t *testing.T) {
 }
 
 func TestSyncZcodeCpOverwriteAndCleanTarget(t *testing.T) {
-	// ZCode 改 cp 后: 真实目录被 cp 覆盖, 干净目标 cp 部署。
+	// v2.1 语义反转: 用户手放的同名目录被阻断(unmanaged), 不再静默 cp 覆盖;
+	// 干净目标照常 cp 部署。(契约来源 skill/reference/safety.md「用户手放的 skill 原封不动」)
 	e := newFakeEnv(t)
 	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
 
-	// 真实目录 → cp 覆盖(不再 deferred)
+	// 真实用户目录 → 阻断, 文件原封不动, 无 DeployPair
 	real := filepath.Join(e.tmp, "zcode", "demo")
 	if err := os.MkdirAll(real, 0o755); err != nil {
 		t.Fatal(err)
@@ -365,14 +366,23 @@ func TestSyncZcodeCpOverwriteAndCleanTarget(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := e.collect(t, []string{"demo"}, []string{"ZCode"}, false)
-	e.execute(t, ctx)
-	rb, _ := os.ReadFile(filepath.Join(real, "SKILL.md"))
-	if strings.Contains(string(rb), "user real") {
-		t.Fatal("应被 cp 覆盖")
+	if !anyItem(ctx.Plan, func(i sync.PlanItem) bool {
+		return i.Kind == "unmanaged" && i.Skill == "demo" && i.Agent == "ZCode"
+	}) {
+		t.Fatalf("应有 unmanaged 阻断项: %+v", ctx.Plan)
 	}
-	rec := e.manifest.Find("demo", "m1", "ZCode")
-	if len(rec) != 1 || rec[0].Method != "cp" {
-		t.Fatalf("rec: %+v", rec)
+	if len(ctx.DeployPairs) != 0 {
+		t.Fatalf("阻断项不应进 DeployPairs: %+v", ctx.DeployPairs)
+	}
+	if rc := e.execute(t, ctx); rc == 0 {
+		t.Fatal("有阻断项时 execute 应返回非 0")
+	}
+	rb, err := os.ReadFile(filepath.Join(real, "SKILL.md"))
+	if err != nil || string(rb) != "user real" {
+		t.Fatalf("用户文件应原封不动: %v %q", err, rb)
+	}
+	if rec := e.manifest.Find("demo", "m1", "ZCode"); len(rec) != 0 {
+		t.Fatalf("阻断项不应有 manifest 记录: %+v", rec)
 	}
 
 	// 干净目标 → cp(真实目录不是软链)
@@ -390,6 +400,244 @@ func TestSyncZcodeCpOverwriteAndCleanTarget(t *testing.T) {
 	rec2 := e.manifest.Find("fresh", "m1", "ZCode")
 	if len(rec2) != 1 || rec2[0].Method != "cp" {
 		t.Fatalf("rec2: %+v", rec2)
+	}
+}
+
+func TestSyncForceAdoptsUnmanagedTarget(t *testing.T) {
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	real := filepath.Join(e.tmp, "claude", "demo")
+	if err := os.MkdirAll(real, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(real, "SKILL.md"), []byte("user real"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// --force 收编: 覆盖 + upsert 记录
+	ctx := e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, true)
+	if !anyItem(ctx.Plan, func(i sync.PlanItem) bool { return i.Kind == "deploy" }) {
+		t.Fatalf("force 应回收编为 deploy: %+v", ctx.Plan)
+	}
+	if rc := e.execute(t, ctx); rc != 0 {
+		t.Fatal("force 收编应执行成功")
+	}
+	rb, _ := os.ReadFile(filepath.Join(real, "SKILL.md"))
+	if strings.Contains(string(rb), "user real") {
+		t.Fatal("force 收编后应被覆盖")
+	}
+	rec := e.manifest.Find("demo", "m1", "ClaudeCode")
+	if len(rec) != 1 {
+		t.Fatalf("应有记录: %+v", rec)
+	}
+
+	// 下一轮非 force → keep(收编后进入正常对账)
+	ctx2 := e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, false)
+	if !anyItem(ctx2.Plan, func(i sync.PlanItem) bool {
+		return i.Kind == "keep" && i.Skill == "demo"
+	}) {
+		t.Fatalf("收编后应 keep: %+v", ctx2.Plan)
+	}
+}
+
+func TestSyncBlocksSymlinkTarget(t *testing.T) {
+	// 软链目标: 写穿会污染链目标(最坏 = canonical 本体), --force 也不放行。
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	link := filepath.Join(e.tmp, "claude", "demo")
+	userTarget := filepath.Join(e.tmp, "user-data")
+	if err := os.MkdirAll(filepath.Dir(link), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(userTarget, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(userTarget, link); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, force := range []bool{false, true} {
+		ctx := e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, force)
+		if !anyItem(ctx.Plan, func(i sync.PlanItem) bool {
+			return i.Kind == "unmanaged" && i.Skill == "demo"
+		}) {
+			t.Fatalf("force=%v 应仍阻断: %+v", force, ctx.Plan)
+		}
+		if len(ctx.DeployPairs) != 0 {
+			t.Fatalf("force=%v 软链不应进 DeployPairs: %+v", force, ctx.DeployPairs)
+		}
+	}
+	if rc := e.execute(t, e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, false)); rc == 0 {
+		t.Fatal("软链阻断时 execute 应非 0")
+	}
+	// 链还在, 链目标未被写
+	fi, err := os.Lstat(link)
+	if err != nil || fi.Mode()&os.ModeSymlink == 0 {
+		t.Fatalf("链应原样存在: %v", err)
+	}
+	b, _ := os.ReadFile(filepath.Join(userTarget, "SKILL.md"))
+	if string(b) != "" {
+		t.Fatalf("链目标不应被写入: %q", b)
+	}
+}
+
+func TestSyncAllowsEmptyDirTarget(t *testing.T) {
+	// 空目录(如上次部署残留) → 零用户数据, 放行部署。
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	if err := os.MkdirAll(filepath.Join(e.tmp, "claude", "demo"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	ctx := e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, false)
+	if !anyItem(ctx.Plan, func(i sync.PlanItem) bool {
+		return i.Kind == "deploy" && i.Skill == "demo"
+	}) {
+		t.Fatalf("空目录应放行: %+v", ctx.Plan)
+	}
+	if rc := e.execute(t, ctx); rc != 0 {
+		t.Fatal("空目录部署应成功")
+	}
+}
+
+func TestSyncBlocksNonDirTarget(t *testing.T) {
+	// 普通文件占位: 非 force 阻断; force 收编(通用化清理先删文件再部署)。
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	fileTarget := filepath.Join(e.tmp, "claude", "demo")
+	if err := os.MkdirAll(filepath.Dir(fileTarget), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(fileTarget, []byte("junk"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, false)
+	if !anyItem(ctx.Plan, func(i sync.PlanItem) bool {
+		return i.Kind == "unmanaged" && i.Skill == "demo"
+	}) {
+		t.Fatalf("普通文件应阻断: %+v", ctx.Plan)
+	}
+	ctxF := e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, true)
+	if rc := e.execute(t, ctxF); rc != 0 {
+		t.Fatal("force 收编应成功")
+	}
+	fi, err := os.Lstat(fileTarget)
+	if err != nil || !fi.IsDir() {
+		t.Fatalf("收编后应是部署目录: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(fileTarget, "SKILL.md")); err != nil {
+		t.Fatal("SKILL.md 应存在")
+	}
+}
+
+func TestSyncCrossMachineRecordStillBlocks(t *testing.T) {
+	// skill 在其它机器有记录 ≠ 本机目录是我们的产物 → 仍阻断, 文案说明 --force 收编。
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	real := filepath.Join(e.tmp, "claude", "demo")
+	if err := os.MkdirAll(real, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(real, "SKILL.md"), []byte("user real"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	e.manifest.Upsert(manifest.DeployRecord{
+		Skill: "demo", Machine: "m2", Agent: "ClaudeCode",
+		DeployPath: "/other/m2/claude/demo", Method: "cp", IrHash: "sha256:old",
+	})
+
+	ctx := e.collect(t, []string{"demo"}, []string{"ClaudeCode"}, false)
+	found := anyItem(ctx.Plan, func(i sync.PlanItem) bool {
+		return i.Kind == "unmanaged" && i.Skill == "demo" &&
+			strings.Contains(i.Detail, "--force 收编")
+	})
+	if !found {
+		t.Fatalf("跨机记录应仍阻断并提示收编: %+v", ctx.Plan)
+	}
+}
+
+func TestSyncHermesTargetPathUsesCategory(t *testing.T) {
+	// 分类必须用 emitter 真实路径(Hermes = <root>/<category>/<name>), 否则查错目录。
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	real := filepath.Join(e.tmp, "hermes", "imported", "demo")
+	if err := os.MkdirAll(real, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(real, "SKILL.md"), []byte("user real"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := e.collect(t, []string{"demo"}, []string{"Hermes"}, false)
+	ok := anyItem(ctx.Plan, func(i sync.PlanItem) bool {
+		return i.Kind == "unmanaged" && i.Skill == "demo" &&
+			strings.Contains(i.Detail, "imported")
+	})
+	if !ok {
+		t.Fatalf("应在 Hermes 真实 category 路径上阻断: %+v", ctx.Plan)
+	}
+	rb, _ := os.ReadFile(filepath.Join(real, "SKILL.md"))
+	if string(rb) != "user real" {
+		t.Fatal("用户文件不应被动")
+	}
+}
+
+func TestSyncLegacyManagedSymlinkMigrates(t *testing.T) {
+	// 旧版 ZCode ln 记录的软链(有 manifest 记录)→ 摘链重 cp, 不受新分类误伤。
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	link := filepath.Join(e.tmp, "zcode", "demo")
+	canonicalDir := filepath.Join(e.repo, "skills", "demo")
+	if err := os.MkdirAll(filepath.Dir(link), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(canonicalDir, link); err != nil {
+		t.Fatal(err)
+	}
+	e.manifest.Upsert(manifest.DeployRecord{
+		Skill: "demo", Machine: "m1", Agent: "ZCode",
+		DeployPath: link, Method: "ln", IrHash: "sha256:old",
+	})
+
+	ctx := e.collect(t, []string{"demo"}, []string{"ZCode"}, false)
+	if !anyItem(ctx.Plan, func(i sync.PlanItem) bool {
+		return i.Kind == "deploy" && i.Skill == "demo" && i.Agent == "ZCode"
+	}) {
+		t.Fatalf("有记录的旧软链应正常重部署: %+v", ctx.Plan)
+	}
+	if rc := e.execute(t, ctx); rc != 0 {
+		t.Fatal("迁移应成功")
+	}
+	fi, err := os.Lstat(link)
+	if err != nil || !fi.IsDir() {
+		t.Fatalf("旧软链应被替换为真实目录: %v", err)
+	}
+	rec := e.manifest.Find("demo", "m1", "ZCode")
+	if len(rec) != 1 || rec[0].Method != "cp" {
+		t.Fatalf("应更新为 cp 记录: %+v", rec)
+	}
+}
+
+func TestExecuteGuardSkipsUnmanagedPair(t *testing.T) {
+	// 纵深防御: DeployPairs 里混入无记录且目标非空的对抗项 → execute 拦下, 用户文件存活。
+	e := newFakeEnv(t)
+	writeCanonical(t, e.repo, "demo", "## body\n", "", nil)
+	real := filepath.Join(e.tmp, "claude", "demo")
+	if err := os.MkdirAll(real, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(real, "SKILL.md"), []byte("user real"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := e.collect(t, nil, nil, false) // 正常收集中 demo 已被阻为 unmanaged
+	ctx.DeployPairs = append(ctx.DeployPairs, [2]string{"demo", "ClaudeCode"})
+	if rc := e.execute(t, ctx); rc == 0 {
+		t.Fatal("对抗注入应被护栏拦下")
+	}
+	rb, _ := os.ReadFile(filepath.Join(real, "SKILL.md"))
+	if string(rb) != "user real" {
+		t.Fatalf("护栏应保住用户文件: %q", rb)
 	}
 }
 
